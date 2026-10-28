@@ -491,12 +491,9 @@ async function loadArchive(u, onFirst) {
       fresh.forEach((p) => seen.add(keyOf(p)));
       state.posts.push(...fresh.filter((p) => p.type === "newsletter"));
       off += pg.n;
-      // default pick: the newest free posts, up to about a 40-page issue (Mixam staples up to 96)
-      for (const p of fresh) {
-        if (p.audience !== "everyone" || p.type !== "newsletter" || state.sel.size >= 12) continue;
-        if (state.sel.size && state.budget + estPages(p) > 36) { state.budget = Infinity; continue; } // stop at the first that won't fit
-        state.sel.add(keyOf(p)); state.budget += estPages(p);
-      }
+      // default pick: every free post. It is their whole Substack; trimming to the newest few hid
+      // the older work (2026-10-28). Past 96 pages the download step says so.
+      for (const p of fresh) if (p.audience === "everyone" && p.type === "newsletter") state.sel.add(keyOf(p));
       if (first) { first = false; onFirst && onFirst(); }
       $("#selsum") && drawListSoon();
     }

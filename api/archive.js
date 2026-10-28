@@ -37,10 +37,14 @@ module.exports = async (req, res) => {
       try {
         const prof = await getJSON(`https://substack.com/api/v1/user/${encodeURIComponent(raw)}/public_profile`);
         name = prof.name || null;
-        for (const pu of prof.publicationUsers || []) {
-          const p = pu.publication || {};
-          if (p.subdomain && (pu.role === "admin" || pu.role === "contributor" || !pu.role)) pubs.push({ host: `${p.subdomain}.substack.com`, name: p.name || p.subdomain });
-        }
+        // One publication, never every newsletter the writer runs: the one whose subdomain is the
+        // handle they typed, else their primary one. (aidanjude also runs randomaidan and
+        // visionboards; merging them put Random posts in a Periodicals magazine, 2026-10-28.)
+        const own = (prof.publicationUsers || []).map((pu) => pu.publication || {}).filter((p) => p.subdomain);
+        const pick = own.find((p) => p.subdomain.toLowerCase() === raw.toLowerCase())
+          || own.find((p) => prof.primaryPublication && p.subdomain === prof.primaryPublication.subdomain)
+          || own[0];
+        if (pick) pubs.push({ host: pick.custom_domain || `${pick.subdomain}.substack.com`, name: pick.name || pick.subdomain });
       } catch (e) { if (e.status && e.status !== 404) throw e; }
       if (!pubs.length) pubs = [{ host: `${raw.toLowerCase()}.substack.com`, name: raw }];
     } else {
