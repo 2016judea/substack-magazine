@@ -563,7 +563,7 @@ async function buildPdf(printer, part = "all") {
 }
 
 /* ---------- viewer ---------- */
-const wide = () => window.matchMedia("(min-width: 900px)").matches;
+const wide = () => window.matchMedia("(min-width: 1000px)").matches;
 function spreads() {
   const n = state.pages.length;
   if (!wide()) return state.pages.map((_, i) => [i]);
@@ -625,21 +625,35 @@ function bindingUi() {
     document.querySelectorAll(".pw").forEach((e) => (e.textContent = TEXT_PAPER[state.paper].label));
     document.querySelectorAll(".cw").forEach((e) => (e.textContent = COVER_PAPER[state.coverPaper].label));
     document.querySelectorAll(".sv").forEach((e) => (e.textContent = sIn.toFixed(2)));
-    const cv = $("#spreadcv"); if (cv && $("#s5").classList.contains("on")) drawSpread(cv, Math.min((cv.parentElement.clientWidth || 364) - 24, 680));
+    const cv = $("#spreadcv"); if (cv && state.pages.length) drawSpread(cv, Math.min((cv.parentElement.clientWidth || 364) - 24, 680));
   }
 }
 
 /* ---------- steps ---------- */
-const STEPS = ["s1", "s2", "s3", "s4", "s5"];
-function show(id) {
-  STEPS.forEach((s) => $("#" + s).classList.toggle("on", s === id));
-  // his flow numbers its steps 1-7; generating is step 4, design is 5 and 6 on one screen
-  $("#prog").textContent = `Step ${["1", "2", "3", "5–6", "7"][STEPS.indexOf(id)]} of 7`;
-  window.scrollTo(0, 0);
-  if (id === "s4") requestAnimationFrame(render);
-  if (id === "s5" && state.pages.length) requestAnimationFrame(bindingUi);
+// One screen, top to bottom (Aidan, 2026-10-28: "all on one screen, so its clear to them what is
+// next"). Steps 1-4 open in order as each is satisfied; 5-7 open together once the magazine
+// exists. Done steps stay open and editable; upcoming ones show a title and one line.
+const LABELS = ["Enter your username", "Select your posts", "Name it", "Generate the magazine", "Design your cover", "Choose a typography", "Download the PDF"];
+const selKey = () => [...state.sel].sort().join("|");
+function progress() {
+  const made = state.pages.length > 0, stale = made && state.genKey !== selKey();
+  const done = [state.posts.length > 0, state.sel.size > 0, !!$("#magname").value.trim(), made && !stale, !!state.cover, made && state.typePicked, false];
+  let cur = done.findIndex((d, i) => !d && (i < 4 || made));
+  if (cur > 3 && !made) cur = 3;
+  if (cur < 0) cur = 6;
+  for (let i = 0; i < 7; i++) {
+    const el = $("#s" + (i + 1)), open = i <= Math.min(cur, 3) || (made && i >= 4);
+    el.classList.toggle("up", !open); el.classList.toggle("cur", i === cur); el.classList.toggle("done", !!(open && done[i] && i !== cur));
+  }
+  const gen = $("#gen");
+  gen.hidden = made && !stale; gen.textContent = stale ? "Update the magazine →" : "Generate the magazine →";
+  $("#stale").hidden = !stale;
+  document.querySelectorAll(".dl").forEach((b) => (b.disabled = stale));
+  $("#prog").textContent = `Next: ${LABELS[cur]}`;
 }
-document.querySelectorAll(".back").forEach((b) => b.addEventListener("click", () => show(b.dataset.to)));
+// the preview sits under step 4 on a phone, and stays beside the steps on a wide screen
+function placeViewer() { $("#viewer").classList.toggle("none", !state.pages.length); $("#blank").hidden = state.pages.length > 0; $("#blankname").textContent = $("#magname").value.trim() || state.name || ""; const v = $("#viewer"), dst = wide() ? $("#slot-wide") : $("#slot-phone"); if (state.pages.length && v.parentElement !== dst) dst.appendChild(v); if (!state.pages.length) $("#slot-phone").appendChild(v); }
+const reveal = (id) => { const el = $("#" + id); if (el && el.getBoundingClientRect().top > window.innerHeight * 0.7) el.scrollIntoView({ behavior: "smooth", block: "start" }); };
 
 async function api(path) {
   const r = await fetch(path);
@@ -656,7 +670,8 @@ async function loadArchive(u, onFirst) {
   const me = ++run;
   const d = await api("/api/archive?u=" + encodeURIComponent(u));
   if (me !== run) return;
-  Object.assign(state, { user: u, name: d.name, pubs: d.pubs, posts: [], sel: new Set(), loading: true, bodies: new Map(), budget: 0 });
+  Object.assign(state, { user: u, name: d.name, pubs: d.pubs, posts: [], sel: new Set(), loading: true, bodies: new Map(), budget: 0, pages: [], issue: null, genKey: null });
+  placeViewer(); progress();
   $("#magname").value = d.name || ""; $("#filter").value = "";
   const seen = new Set(); let first = true;
   for (const pub of d.pubs) {
@@ -695,13 +710,14 @@ $("#f1").addEventListener("submit", async (e) => {
   e.preventDefault();
   const btn = $("#find"), err = $("#e1"), u = $("#user").value.trim(); err.hidden = true;
   if (!u) { err.textContent = "Enter a Substack username."; err.hidden = false; return; }
-  if (state.user === u && state.posts.length) { show("s2"); $("#drop").open = true; return; }
+  if (state.user === u && state.posts.length) { progress(); return; }
   btn.disabled = true; btn.textContent = "Finding…";
   try {
-    await loadArchive(u, () => { show("s2"); $("#drop").open = true; btn.disabled = false; btn.textContent = "Find posts"; });
+    await loadArchive(u, () => { progress(); btn.disabled = false; btn.textContent = "Find posts"; });
   } catch (x) {
-    if ($("#s1").classList.contains("on")) { err.textContent = x.message; err.hidden = false; }
+    if (!state.posts.length) { err.textContent = x.message; err.hidden = false; }
     else $("#est").textContent = x.message;
+    progress();
   }
   btn.disabled = false; btn.textContent = "Find posts";
 });
@@ -735,12 +751,12 @@ function summary() {
   $("#selsum").textContent = `${sel.length} of ${state.posts.length}${state.loading ? "+" : ""} posts selected`;
   const est = Math.max(8, Math.ceil((3 + sel.reduce((a, p) => a + estPages(p), 0)) / 4) * 4);
   $("#est").textContent = (state.loading ? `Still reading the archive: ${state.posts.length} posts so far. ` : "") + (sel.length ? `${words.toLocaleString()} words. You'll see the exact page count when it's laid out.` + (est > 96 ? " This many words is likely past the 96 pages Mixam can staple." : "") : "Pick at least one post.");
-  $("#to3").disabled = !sel.length; $("#gen").disabled = !sel.length;
+  $("#gen").disabled = !sel.length;
+  progress();
 }
 $("#filter").addEventListener("input", drawList);
 $("#all").addEventListener("click", () => { state.posts.filter((p) => p.audience === "everyone").forEach((p) => state.sel.add(keyOf(p))); drawList(); });
 $("#none").addEventListener("click", () => { state.sel.clear(); drawList(); });
-$("#to3").addEventListener("click", () => { if (!$("#magname").value.trim()) $("#magname").value = state.name || ""; show("s3"); });
 
 // 3. generate
 async function pool(items, n, fn) {
@@ -792,15 +808,17 @@ $("#gen").addEventListener("click", async () => {
       hosts: [...new Set(sel.map((p) => p.host))],
       posts: sel.map((p) => { const b = state.bodies.get(keyOf(p)); return { title: b.title || p.title, subtitle: b.subtitle || p.subtitle, date: p.date, pub: p.pub, paid: p.audience !== "everyone", blocks: b.blocks }; }),
     };
-    state.view = 0;
-    show("s4");
+    state.view = 0; state.genKey = selKey();
     await relayout();
+    placeViewer(); render(); progress();
+    (wide() ? $("#s5") : $("#viewer")).scrollIntoView({ behavior: "smooth", block: "start" });
     track("generated", { posts: sel.length, pages: state.pages.length });
     msg.textContent = "";
   } catch (e) { msg.textContent = "Something went wrong: " + e.message; }
   btn.disabled = false;
 });
 $("#magname").addEventListener("change", () => { if (state.issue) { state.issue.name = $("#magname").value.trim() || state.name; relayout(); } });
+$("#magname").addEventListener("input", () => { progress(); placeViewer(); });
 
 // 5. cover upload
 $("#cover").addEventListener("change", async (e) => {
@@ -822,7 +840,7 @@ $("#cover").addEventListener("change", async (e) => {
     state.cover = { bytes, png: false, bmp: await createImageBitmap(blob), w: cv.width, h: cv.height, dark: lum < 150 };
     const ppi = Math.round(Math.min(cv.width / ((W + 2 * BLEED) / 72), cv.height / ((H + 2 * BLEED) / 72)));
     $("#covlab").textContent = `${f.name} ✓  (${ppi} ppi at print size${ppi < 200 ? ", may print soft" : ""}). Tap to change.`;
-    state.view = 0; await relayout();
+    state.view = 0; await relayout(); progress();
     track("cover", { ppi });
   } catch (x) { $("#covlab").textContent = "Couldn't read that image. Try a JPEG or PNG."; }
 });
@@ -835,7 +853,7 @@ function drawTypes() {
     b.innerHTML = `<b style="font-family:'mz-${T.head}',serif">${T.label}</b><small>${T.note}</small>`;
     b.addEventListener("click", async () => {
       state.type = T.id; document.querySelectorAll(".ty").forEach((x) => x.classList.toggle("on", x === b));
-      await relayout(); track("type", { type: T.id });
+      state.typePicked = true; await relayout(); progress(); track("type", { type: T.id });
     });
     box.appendChild(b);
   }
@@ -844,12 +862,11 @@ TYPES.forEach((T) => { if (!faceLoaded.has(T.head)) new FontFace("mz-" + T.head,
 drawTypes();
 $("#prev").addEventListener("click", () => go(-1));
 $("#next").addEventListener("click", () => go(1));
-document.addEventListener("keydown", (e) => { if (!$("#s4").classList.contains("on")) return; if (e.key === "ArrowRight") go(1); if (e.key === "ArrowLeft") go(-1); });
+document.addEventListener("keydown", (e) => { if (!state.pages.length || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return; if (e.key === "ArrowRight") go(1); if (e.key === "ArrowLeft") go(-1); });
 let tx = null;
 $("#spread").addEventListener("touchstart", (e) => (tx = e.touches[0].clientX), { passive: true });
 $("#spread").addEventListener("touchend", (e) => { if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); tx = null; });
-let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (state.pages.length && $("#s4").classList.contains("on")) render(); }, 120); });
-$("#to5").addEventListener("click", () => show("s5"));
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (state.pages.length) { placeViewer(); render(); bindingUi(); } }, 120); });
 
 // 7. download
 document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
@@ -883,5 +900,6 @@ $("#spineover").addEventListener("input", (e) => { const v = parseFloat(e.target
 
 // Open pre-loaded with an example: the default username is looked up straight away, so the picker
 // is ready to click through. (A visitor can go back and type their own.)
-loadArchive($("#user").value.trim()).catch(() => {});
+progress(); placeViewer();
+loadArchive($("#user").value.trim()).then(placeViewer).catch(() => {});
 window.__mz = state; // for testing

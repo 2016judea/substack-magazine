@@ -10,88 +10,102 @@
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-<main>
+<main class="flow">
+  <div class="col">
   <header class="top">
     <span class="mark">Substack&nbsp;→&nbsp;Magazine</span>
-    <span class="prog" id="prog">Step 1 of 7</span>
+    <span class="prog" id="prog"></span>
   </header>
+  <h1>Turn your Substack into a physical magazine.</h1>
+  <p class="intro">For as much as I love Substack, I want to spend less time on my phone. And there's something about the physical (analog) medium. About holding your work in hand.</p>
 
-  <!-- 1 -->
-  <section class="step on" id="s1">
-    <h1>Turn your Substack into a physical magazine.</h1>
-    <p class="intro">For as much as I love Substack, I want to spend less time on my phone. And there's something about the physical (analog) medium. About holding your work in hand.</p>
-    <form id="f1" autocomplete="off">
-      <label for="user" class="q"><span class="n">1</span> Enter your username</label>
-      <div class="search">
-        <input id="user" name="user" type="search" inputmode="url" autocapitalize="off" spellcheck="false" value="aidanjude" placeholder="yourname or yourname.substack.com">
-        <button type="submit" class="go" id="find">Find posts</button>
-      </div>
-      <p class="hint">Your Substack handle, a <em>name</em>.substack.com address, or a custom domain.</p>
-      <p class="err" id="e1" hidden></p>
-    </form>
-  </section>
-
-  <!-- 2 -->
-  <section class="step" id="s2">
-    <button class="back" data-to="s1">← Back</button>
-    <label class="q"><span class="n">2</span> Select your posts</label>
-    <details class="drop" id="drop">
-      <summary><span id="selsum">0 posts selected</span><span class="chev">▾</span></summary>
-      <div class="dropin">
-        <div class="tools">
-          <input id="filter" type="search" placeholder="Search titles">
-          <button type="button" class="lnk" id="all">All free</button>
-          <button type="button" class="lnk" id="none">None</button>
+  <ol class="steps">
+    <li class="st" id="s1">
+      <h2 class="sh"><label for="user"><span class="n">1</span> Enter your username</label></h2>
+      <div class="body">
+      <form id="f1" autocomplete="off">
+        <div class="search">
+          <input id="user" name="user" type="search" inputmode="url" autocapitalize="off" spellcheck="false" value="aidanjude" placeholder="yourname or yourname.substack.com">
+          <button type="submit" class="go" id="find">Find posts</button>
         </div>
-        <div id="list" class="list"></div>
+        <p class="hint">Your Substack handle, a <em>name</em>.substack.com address, or a custom domain.</p>
+        <p class="err" id="e1" hidden></p>
+      </form>
       </div>
-    </details>
-    <p class="hint" id="est"></p>
-    <button class="go wide" id="to3">Next</button>
-  </section>
+    </li>
 
-  <!-- 3 -->
-  <section class="step" id="s3">
-    <button class="back" data-to="s2">← Back</button>
-    <label for="magname" class="q"><span class="n">3</span> Give your magazine a name</label>
-    <input id="magname" class="big" type="text" maxlength="60">
-    <button class="go wide" id="gen">Generate the magazine →</button>
-    <p class="hint" id="genmsg"></p>
-  </section>
+    <li class="st" id="s2">
+      <h2 class="sh"><span class="n">2</span> Select your posts</h2>
+      <p class="later">Every post you've published, to pick from.</p>
+      <div class="body">
+      <details class="drop" id="drop">
+        <summary><span id="selsum">0 posts selected</span><span class="chev">▾</span></summary>
+        <div class="dropin">
+          <div class="tools">
+            <input id="filter" type="search" placeholder="Search titles">
+            <button type="button" class="lnk" id="all">All free</button>
+            <button type="button" class="lnk" id="none">None</button>
+          </div>
+          <div id="list" class="list"></div>
+        </div>
+      </details>
+      <p class="hint" id="est"></p>
+      </div>
+    </li>
 
-  <!-- 4: generated issue, then design -->
-  <section class="step" id="s4">
-    <button class="back" data-to="s3">← Back</button>
-    <div class="viewer" id="viewer">
-      <div class="spread" id="spread"></div>
-      <div class="nav">
-        <button class="pg" id="prev" aria-label="Previous page">‹</button>
-        <span id="pgno">1 / 1</span>
-        <button class="pg" id="next" aria-label="Next page">›</button>
+    <li class="st" id="s3">
+      <h2 class="sh"><label for="magname"><span class="n">3</span> Give your magazine a name</label></h2>
+      <p class="later">It starts as your name. Change it to anything.</p>
+      <div class="body">
+      <input id="magname" class="big" type="text" maxlength="60">
       </div>
-    </div>
-    <div class="design">
-      <div class="ctl">
-        <label class="q"><span class="n">5</span> Design your cover</label>
-        <label class="upload" for="cover">
-          <input id="cover" type="file" accept="image/*">
-          <span id="covlab">Upload your own image or art</span>
-        </label>
-        <p class="hint">Fills the front cover edge to edge. Portrait images work best; 2550 × 3300 px or larger prints sharp.</p>
-      </div>
-      <div class="ctl">
-        <label class="q"><span class="n">6</span> Choose a typography</label>
-        <div class="types" id="types"></div>
-      </div>
-    </div>
-    <button class="go wide" id="to5">Get the print-ready PDF →</button>
-  </section>
+    </li>
 
-  <!-- 5: download + how to print -->
-  <section class="step" id="s5">
-    <button class="back" data-to="s4">← Back to the magazine</button>
-    <label class="q"><span class="n">7</span> Download the print-ready PDF</label>
+    <li class="st" id="s4">
+      <h2 class="sh"><span class="n">4</span> Generate the magazine</h2>
+      <p class="later">Your posts, laid out as pages you can flip through.</p>
+      <div class="body">
+      <button class="go wide" id="gen">Generate the magazine →</button>
+      <p class="hint" id="genmsg"></p>
+      <div class="slot" id="slot-phone">
+      <div class="viewer" id="viewer">
+        <div class="spread" id="spread"></div>
+        <div class="nav">
+          <button class="pg" id="prev" aria-label="Previous page">‹</button>
+          <span id="pgno">1 / 1</span>
+          <button class="pg" id="next" aria-label="Next page">›</button>
+        </div>
+      </div>
+      </div>
+      </div>
+    </li>
+
+    <li class="st" id="s5">
+      <h2 class="sh"><span class="n">5</span> Design your cover</h2>
+      <p class="later">Upload your own image or art for the front cover.</p>
+      <div class="body">
+      <label class="upload" for="cover">
+        <input id="cover" type="file" accept="image/*">
+        <span id="covlab">Upload your own image or art</span>
+      </label>
+      <p class="hint">Fills the front cover edge to edge. Portrait images work best; 2550 × 3300 px or larger prints sharp.</p>
+      </div>
+    </li>
+
+    <li class="st" id="s6">
+      <h2 class="sh"><span class="n">6</span> Choose a typography</h2>
+      <p class="later">Five typefaces. The pages restyle as you pick.</p>
+      <div class="body">
+      <div class="types" id="types"></div>
+      </div>
+    </li>
+
+    <li class="st" id="s7">
+      <h2 class="sh"><span class="n">7</span> Download the print-ready PDF</h2>
+      <p class="later">A print-ready PDF, with step-by-step ordering for Mixam or FedEx Office.</p>
+      <div class="body">
     <p class="hint" id="pagesum"></p>
+    <p class="err" id="stale" hidden>You changed your posts. Update the magazine in step 4 before you download.</p>
     <div class="tabs" role="tablist">
       <button role="tab" class="tab on" data-tab="mixam">Mixam <small>a real magazine, stapled or bound</small></button>
       <button role="tab" class="tab" data-tab="fedex">FedEx Office <small>letter pages, pick up today</small></button>
@@ -160,7 +174,11 @@
       </ol>
       <p class="fine">FedEx prints with a small white margin, never full bleed, so this file keeps the cover art inside a border. Same pages as the Mixam file. Steps checked against office.fedex.com on 28 Oct 2026.</p>
     </div>
-  </section>
+    </div>
+    </li>
+  </ol>
+  </div>
+  <aside class="slot" id="slot-wide"><div class="blank" id="blank"><span id="blankname"></span><small>Your magazine appears here.</small></div></aside>
 </main>
 <footer class="foot">Your posts are fetched from Substack's public archive and laid out in your browser. Nothing is stored.</footer>
 
