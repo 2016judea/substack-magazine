@@ -19,6 +19,10 @@ const TYPES = [
   { id: "grotesk", label: "Grotesk", note: "Inter, modern sans", head: "inter-700", body: "inter-400", it: "inter-400i", bd: "inter-700", size: 9.8, lead: 15, title: 25 },
 ];
 
+// Ligatures off: with them on, pdf-lib drew "ff"/"fi" glyphs ~6 pt wider than it measured, pushing
+// justified lines past the column (found 2026-10-28 in a 1,367-post test issue), and the PDF text
+// extracted as (cid:923). Plain glyphs measure and draw the same.
+const FONT_OPTS = { subset: false, features: { liga: false, clig: false, dlig: false, rlig: false, calt: false } };
 const $ = (s) => document.querySelector(s);
 const state = {
   user: "", name: "", pubs: [], posts: [], sel: new Set(), type: "garamond",
@@ -48,7 +52,7 @@ async function metrics(T) {
   const doc = await PDFDocument.create(); doc.registerFontkit(fontkit);
   const F = {}, CS = {};
   for (const k of keysOf(T)) {
-    F[k] = await doc.embedFont(await bytesOf(k), { subset: false });
+    F[k] = await doc.embedFont(await bytesOf(k), FONT_OPTS);
     CS[k] = new Set(F[k].getCharacterSet());
   }
   const cache = new Map();
@@ -322,7 +326,7 @@ function layoutIssue(issue, T, mx) {
   const yrs = issue.posts.map((p) => (p.date || "").slice(0, 4)).filter(Boolean).sort();
   const span = yrs.length ? (yrs[0] === yrs[yrs.length - 1] ? yrs[0] : yrs[0] + " – " + yrs[yrs.length - 1]) : "";
   const sub = san(`Selected writing  ·  ${span}`, T.body);
-  cy += 26; cover.ops.push({ op: "t", x: (W - wid(T.body, sub, 11)) / 2, y: cy, s: sub, f: T.body, z: 11, c: cText });
+  cy += mz * 0.3 + 20; cover.ops.push({ op: "t", x: (W - wid(T.body, sub, 11)) / 2, y: cy, s: sub, f: T.body, z: 11, c: cText });
   const by = san(issue.author || "", T.body), cnt = san(`${issue.posts.length} ${issue.posts.length === 1 ? "piece" : "pieces"}`, T.body);
   if (by) cover.ops.push({ op: "t", x: (W - wid(T.body, by, 13)) / 2, y: H - 74, s: by, f: T.body, z: 13, c: cText });
   cover.ops.push({ op: "t", x: (W - wid(T.body, cnt, 9)) / 2, y: H - 56, s: cnt, f: T.body, z: 9, c: cText });
@@ -367,7 +371,7 @@ async function buildPdf(printer) {
   const doc = await PDFDocument.create(); doc.registerFontkit(fontkit);
   doc.setTitle(state.issue.name); doc.setAuthor(state.issue.author || ""); doc.setCreator("Substack to Magazine");
   const F = {};
-  for (const k of keysOf(T)) F[k] = await doc.embedFont(await bytesOf(k), { subset: false });
+  for (const k of keysOf(T)) F[k] = await doc.embedFont(await bytesOf(k), FONT_OPTS);
   const E = new Map();
   const emb = async (ref) => {
     if (E.has(ref)) return E.get(ref);
@@ -415,7 +419,7 @@ function render() {
   const sp = spreads(); state.view = Math.max(0, Math.min(state.view, sp.length - 1));
   const cur = sp[state.view], box = $("#spread");
   box.innerHTML = "";
-  const avail = box.clientWidth || 340, availH = window.innerHeight * (wide() ? 0.8 : 0.66);
+  const avail = box.clientWidth || 340, availH = window.innerHeight * (wide() ? 0.8 : 0.56);
   let pw = Math.min(wide() ? avail / 2 : avail, (availH * W) / H);
   pw = Math.floor(pw);
   for (const i of cur) { const cv = document.createElement("canvas"); cv.dataset.page = i + 1; drawCanvas(cv, state.pages[i], pw); box.appendChild(cv); }
@@ -472,9 +476,12 @@ async function loadArchive(u, onFirst) {
     let off = 0;
     for (let guard = 0; guard < 2000; guard++) {
       let pg = null;
-      for (let a = 0; a < 4 && !pg; a++) {
+      for (let a = 0; a < 7 && !pg; a++) {
         try { pg = await api(`/api/archive?host=${encodeURIComponent(pub.host)}&offset=${off}&pub=${encodeURIComponent(pub.name)}`); }
-        catch (e) { if (a === 3) throw new Error("Substack stopped answering part-way. Try again in a minute."); await new Promise((r) => setTimeout(r, 1500 * (a + 1))); }
+        catch (e) {
+          if (a === 6) { state.loading = false; summary(); throw new Error(`Substack stopped answering after ${state.posts.length} posts. Try again in a minute to get the rest.`); }
+          await new Promise((r) => setTimeout(r, 2000 * (a + 1)));
+        }
       }
       if (me !== run) return;
       if (!pg.n) break;
@@ -537,13 +544,13 @@ function drawList() {
   }
   summary();
 }
-const estPages = (p) => 0.6 + (p.words || 0) / 520;
+const estPages = (p) => 0.6 + (p.words || 0) / 420;
 function summary() {
   const sel = state.posts.filter((p) => state.sel.has(keyOf(p)));
   const words = sel.reduce((a, p) => a + (p.words || 0), 0);
   $("#selsum").textContent = `${sel.length} of ${state.posts.length}${state.loading ? "+" : ""} posts selected`;
   const est = Math.max(8, Math.ceil((3 + sel.reduce((a, p) => a + estPages(p), 0)) / 4) * 4);
-  $("#est").textContent = (state.loading ? `Still reading the archive: ${state.posts.length} posts so far. ` : "") + (sel.length ? `${words.toLocaleString()} words, about ${est} printed pages. The exact count shows after you generate.` + (est > 96 ? " That's past the 96 pages Mixam can staple, so pick fewer for a Mixam magazine (FedEx has no limit)." : "") : "Pick at least one post.");
+  $("#est").textContent = (state.loading ? `Still reading the archive: ${state.posts.length} posts so far. ` : "") + (sel.length ? `${words.toLocaleString()} words. You'll see the exact page count when it's laid out.` + (est > 96 ? " This many words is likely past the 96 pages Mixam can staple." : "") : "Pick at least one post.");
   $("#to3").disabled = !sel.length; $("#gen").disabled = !sel.length;
 }
 $("#filter").addEventListener("input", drawList);
