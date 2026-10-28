@@ -448,7 +448,8 @@ async function relayout() {
 const STEPS = ["s1", "s2", "s3", "s4", "s5"];
 function show(id) {
   STEPS.forEach((s) => $("#" + s).classList.toggle("on", s === id));
-  $("#prog").textContent = `Step ${STEPS.indexOf(id) + 1} of 5`;
+  // his flow numbers its steps 1-7; generating is step 4, design is 5 and 6 on one screen
+  $("#prog").textContent = `Step ${["1", "2", "3", "5–6", "7"][STEPS.indexOf(id)]} of 7`;
   window.scrollTo(0, 0);
   if (id === "s4") requestAnimationFrame(render);
 }
