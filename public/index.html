@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Substack to Magazine</title>
+<meta name="description" content="Turn your Substack into a physical magazine. Pick your posts, upload your cover, download a print-ready PDF for Mixam or FedEx Office.">
+<link rel="stylesheet" href="style.css">
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)}</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<main>
+  <header class="top">
+    <span class="mark">Substack&nbsp;→&nbsp;Magazine</span>
+    <span class="prog" id="prog">Step 1 of 5</span>
+  </header>
+
+  <!-- 1 -->
+  <section class="step on" id="s1">
+    <h1>Turn your Substack into a physical magazine.</h1>
+    <p class="intro">For as much as I love Substack, I want to spend less time on my phone. And there's something about the physical (analog) medium. About holding your work in hand.</p>
+    <form id="f1" autocomplete="off">
+      <label for="user" class="q"><span class="n">1</span> Enter your username</label>
+      <div class="search">
+        <input id="user" name="user" type="search" inputmode="url" autocapitalize="off" spellcheck="false" value="aidanjude" placeholder="yourname or yourname.substack.com">
+        <button type="submit" class="go" id="find">Find posts</button>
+      </div>
+      <p class="hint">Your Substack handle, a <em>name</em>.substack.com address, or a custom domain.</p>
+      <p class="err" id="e1" hidden></p>
+    </form>
+  </section>
+
+  <!-- 2 -->
+  <section class="step" id="s2">
+    <button class="back" data-to="s1">← Back</button>
+    <label class="q"><span class="n">2</span> Select your posts</label>
+    <details class="drop" id="drop">
+      <summary><span id="selsum">0 posts selected</span><span class="chev">▾</span></summary>
+      <div class="dropin">
+        <div class="tools">
+          <input id="filter" type="search" placeholder="Search titles">
+          <button type="button" class="lnk" id="all">All free</button>
+          <button type="button" class="lnk" id="none">None</button>
+        </div>
+        <div id="list" class="list"></div>
+      </div>
+    </details>
+    <p class="hint" id="est"></p>
+    <button class="go wide" id="to3">Next</button>
+  </section>
+
+  <!-- 3 -->
+  <section class="step" id="s3">
+    <button class="back" data-to="s2">← Back</button>
+    <label for="magname" class="q"><span class="n">3</span> Give your magazine a name</label>
+    <input id="magname" class="big" type="text" maxlength="60">
+    <button class="go wide" id="gen">Generate the magazine →</button>
+    <p class="hint" id="genmsg"></p>
+  </section>
+
+  <!-- 4: generated issue, then design -->
+  <section class="step" id="s4">
+    <button class="back" data-to="s3">← Back</button>
+    <div class="viewer" id="viewer">
+      <div class="spread" id="spread"></div>
+      <div class="nav">
+        <button class="pg" id="prev" aria-label="Previous page">‹</button>
+        <span id="pgno">1 / 1</span>
+        <button class="pg" id="next" aria-label="Next page">›</button>
+      </div>
+    </div>
+    <div class="design">
+      <div class="ctl">
+        <label class="q"><span class="n">5</span> Design your cover</label>
+        <label class="upload" for="cover">
+          <input id="cover" type="file" accept="image/*">
+          <span id="covlab">Upload your own image or art</span>
+        </label>
+        <p class="hint">Fills the front cover edge to edge. Portrait images work best; 2550 × 3300 px or larger prints sharp.</p>
+      </div>
+      <div class="ctl">
+        <label class="q"><span class="n">6</span> Choose a typography</label>
+        <div class="types" id="types"></div>
+      </div>
+    </div>
+    <button class="go wide" id="to5">Get the print-ready PDF →</button>
+  </section>
+
+  <!-- 5: download + how to print -->
+  <section class="step" id="s5">
+    <button class="back" data-to="s4">← Back to the magazine</button>
+    <label class="q"><span class="n">7</span> Download the print-ready PDF</label>
+    <p class="hint" id="pagesum"></p>
+    <div class="tabs" role="tablist">
+      <button role="tab" class="tab on" data-tab="mixam">Mixam <small>a real magazine, stapled</small></button>
+      <button role="tab" class="tab" data-tab="fedex">FedEx Office <small>letter pages, pick up today</small></button>
+    </div>
+
+    <div class="panel on" id="p-mixam">
+      <button class="go wide dl" data-printer="mixam">Download for Mixam (PDF)</button>
+      <p class="hint" id="mixwarn"></p>
+      <ol class="how">
+        <li>Go to <a href="https://mixam.com/booklets" target="_blank" rel="noopener">mixam.com/booklets</a> and scroll to <b>Create Your Booklets</b>.</li>
+        <li><b>Quantity</b>: how many copies you want. <b>Color Printing</b>: <b>Color</b>.</li>
+        <li><b>Orientation</b>: <b>Portrait</b>. <b>Size</b>: <b>Letter (8.5" x 11")</b>. Pick the trim size, not the size with bleed; the bleed is already in the file.</li>
+        <li><b>Paper Type</b>: <b>Coated</b>, then <b>Satin</b>. <b>Paper Weight</b>: <b>100lb Text</b> for heft, or 80lb Text to save a little.</li>
+        <li><b>Choose Binding</b>: <b>Staple</b>. <b>Pages</b>: set the slider to <b class="np">—</b>.</li>
+        <li>Leave <b>Add Cover (+4 Printed Pages)</b> unticked. Your cover is page 1 of the file and the back cover is the last page.</li>
+        <li>On the right, pick a shipping date and price. Under <b>Design Option</b>, choose <b>Upload Own Artwork</b>, then <b>Add to Cart</b>.</li>
+        <li>Click <b>Continue</b>. In the <b>Artwork</b> tab, drag the PDF in or click <b>Upload files</b>.</li>
+        <li>Flip through the <b>Preview</b> and open the <b>PDF Proof</b>. Check nothing important on the cover crosses the trim line. Then fill in <b>Details</b> and <b>Payment</b>.</li>
+      </ol>
+      <p class="fine">File: Letter 8.5 × 11 in trim, 0.125 in bleed on every side, page count a multiple of 4 (saddle stitch). Steps checked against mixam.com on 28 Oct 2026.</p>
+    </div>
+
+    <div class="panel" id="p-fedex">
+      <button class="go wide dl" data-printer="fedex">Download for FedEx Office (PDF)</button>
+      <ol class="how">
+        <li>Go to <a href="https://www.office.fedex.com/default/copies.html" target="_blank" rel="noopener">FedEx Office → Copies &amp; Custom Documents</a>.</li>
+        <li>Click <b>UPLOAD A FILE</b> and choose the PDF. You can continue as a guest.</li>
+        <li><b>PRINT COLOR</b>: <b>Full Color</b>. <b>PAPER SIZE</b>: <b>8.5in x 11in</b>.</li>
+        <li><b>PAPER TYPE</b>: the default is Laser (32 lb.). A heavier professional white paper feels more like a magazine.</li>
+        <li><b>SIDES</b>: change Single-Sided to <b>Double-Sided</b>.</li>
+        <li>Under binding, choose <b>stapled</b> (coil and comb are also offered).</li>
+        <li>Set <b>QUANTITY</b>, then <b>Add to Cart</b>. Choose a store for pickup and check out. Most orders are ready the same day or within 24 hours.</li>
+      </ol>
+      <p class="fine">FedEx prints with a small white margin, never full bleed, so this file keeps the cover art inside a border. Same pages as the Mixam file. Steps checked against office.fedex.com on 28 Oct 2026.</p>
+    </div>
+  </section>
+</main>
+<footer class="foot">Your posts are fetched from Substack's public archive and laid out in your browser. Nothing is stored.</footer>
+
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/fontkit.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
