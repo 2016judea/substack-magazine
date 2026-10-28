@@ -465,7 +465,7 @@ async function loadArchive(u, onFirst) {
   const me = ++run;
   const d = await api("/api/archive?u=" + encodeURIComponent(u));
   if (me !== run) return;
-  Object.assign(state, { user: u, name: d.name, pubs: d.pubs, posts: [], sel: new Set(), loading: true, bodies: new Map() });
+  Object.assign(state, { user: u, name: d.name, pubs: d.pubs, posts: [], sel: new Set(), loading: true, bodies: new Map(), budget: 0 });
   $("#magname").value = d.name || ""; $("#filter").value = "";
   const seen = new Set(); let first = true;
   for (const pub of d.pubs) {
@@ -483,7 +483,12 @@ async function loadArchive(u, onFirst) {
       fresh.forEach((p) => seen.add(keyOf(p)));
       state.posts.push(...fresh.filter((p) => p.type === "newsletter"));
       off += pg.n;
-      if (state.sel.size < 12) for (const p of fresh) if (p.audience === "everyone" && p.type === "newsletter" && state.sel.size < 12) state.sel.add(keyOf(p));
+      // default pick: the newest free posts, up to about a 40-page issue (Mixam staples up to 96)
+      for (const p of fresh) {
+        if (p.audience !== "everyone" || p.type !== "newsletter" || state.sel.size >= 12) continue;
+        if (state.sel.size && state.budget + estPages(p) > 36) { state.budget = Infinity; continue; } // stop at the first that won't fit
+        state.sel.add(keyOf(p)); state.budget += estPages(p);
+      }
       if (first) { first = false; onFirst && onFirst(); }
       $("#selsum") && drawListSoon();
     }
@@ -532,12 +537,13 @@ function drawList() {
   }
   summary();
 }
+const estPages = (p) => 0.6 + (p.words || 0) / 520;
 function summary() {
   const sel = state.posts.filter((p) => state.sel.has(keyOf(p)));
   const words = sel.reduce((a, p) => a + (p.words || 0), 0);
   $("#selsum").textContent = `${sel.length} of ${state.posts.length}${state.loading ? "+" : ""} posts selected`;
-  const est = Math.max(8, Math.ceil((3 + words / 480 + sel.length * 0.5) / 4) * 4);
-  $("#est").textContent = (state.loading ? `Still reading the archive: ${state.posts.length} posts so far. ` : "") + (sel.length ? `${words.toLocaleString()} words, about ${est} printed pages. The exact count shows after you generate.` : "Pick at least one post.");
+  const est = Math.max(8, Math.ceil((3 + sel.reduce((a, p) => a + estPages(p), 0)) / 4) * 4);
+  $("#est").textContent = (state.loading ? `Still reading the archive: ${state.posts.length} posts so far. ` : "") + (sel.length ? `${words.toLocaleString()} words, about ${est} printed pages. The exact count shows after you generate.` + (est > 96 ? " That's past the 96 pages Mixam can staple, so pick fewer for a Mixam magazine (FedEx has no limit)." : "") : "Pick at least one post.");
   $("#to3").disabled = !sel.length; $("#gen").disabled = !sel.length;
 }
 $("#filter").addEventListener("input", drawList);
