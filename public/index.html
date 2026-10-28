@@ -93,25 +93,58 @@
     <label class="q"><span class="n">7</span> Download the print-ready PDF</label>
     <p class="hint" id="pagesum"></p>
     <div class="tabs" role="tablist">
-      <button role="tab" class="tab on" data-tab="mixam">Mixam <small>a real magazine, stapled</small></button>
+      <button role="tab" class="tab on" data-tab="mixam">Mixam <small>a real magazine, stapled or bound</small></button>
       <button role="tab" class="tab" data-tab="fedex">FedEx Office <small>letter pages, pick up today</small></button>
     </div>
 
     <div class="panel on" id="p-mixam">
-      <button class="go wide dl" data-printer="mixam">Download for Mixam (PDF)</button>
+      <div class="binds" role="radiogroup" aria-label="Binding">
+        <button type="button" class="bd on" id="bd-staple" data-bind="staple">Staple <small>folded and stapled, up to 96 pages</small></button>
+        <button type="button" class="bd" id="bd-perfect" data-bind="perfect">Perfect (PUR) <small>glued square spine, like a paperback</small></button>
+      </div>
       <p class="hint" id="mixwarn"></p>
-      <ol class="how">
-        <li>Go to <a href="https://mixam.com/booklets" target="_blank" rel="noopener">mixam.com/booklets</a> and scroll to <b>Create Your Booklets</b>.</li>
-        <li><b>Quantity</b>: how many copies you want. <b>Color Printing</b>: <b>Color</b>.</li>
-        <li><b>Orientation</b>: <b>Portrait</b>. <b>Size</b>: <b>Letter (8.5" x 11")</b>. Pick the trim size, not the size with bleed; the bleed is already in the file.</li>
-        <li><b>Paper Type</b>: <b>Coated</b>, then <b>Satin</b>. <b>Paper Weight</b>: <b>100lb Text</b> for heft, or 80lb Text to save a little.</li>
-        <li><b>Choose Binding</b>: <b>Staple</b>. <b>Pages</b>: set the slider to <b class="np">—</b>.</li>
-        <li>Leave <b>Add Cover (+4 Printed Pages)</b> unticked. Your cover is page 1 of the file and the back cover is the last page.</li>
-        <li>On the right, pick a shipping date and price. Under <b>Design Option</b>, choose <b>Upload Own Artwork</b>, then <b>Add to Cart</b>.</li>
-        <li>Click <b>Continue</b>. In the <b>Artwork</b> tab, drag the PDF in or click <b>Upload files</b>.</li>
-        <li>Flip through the <b>Preview</b> and open the <b>PDF Proof</b>. Check nothing important on the cover crosses the trim line. Then fill in <b>Details</b> and <b>Payment</b>.</li>
-      </ol>
-      <p class="fine">File: Letter 8.5 × 11 in trim, 0.125 in bleed on every side, page count a multiple of 4 (saddle stitch). Steps checked against mixam.com on 28 Oct 2026.</p>
+
+      <div id="m-staple">
+        <button class="go wide dl" data-printer="mixam">Download for Mixam (PDF)</button>
+        <ol class="how">
+          <li>Go to <a href="https://mixam.com/magazines" target="_blank" rel="noopener">mixam.com/magazines</a> and scroll to <b>Create Your Magazines</b>.</li>
+          <li><b>Quantity</b>: how many copies you want. <b>Color Printing</b>: <b>Color</b>.</li>
+          <li><b>Orientation</b>: <b>Portrait</b>. <b>Size</b>: <b>Letter (8.5" x 11")</b>. Pick the trim size, not the size with bleed; the bleed is already in the file.</li>
+          <li><b>Paper Type</b>: <b>Coated</b>, then <b>Satin</b>. <b>Paper Weight</b>: <b>100lb Text</b> for heft, or 80lb Text to save a little.</li>
+          <li><b>Choose Binding</b>: <b>Staple</b>. <b>Pages</b>: set it to <b class="np">—</b>.</li>
+          <li>Leave the separate cover off. Your cover is page 1 of the file and the back cover is the last page.</li>
+          <li>Under <b>Choose Price and Shipping Date</b>, pick one. <b>Design Option</b>: <b>Upload Own Artwork</b>, then <b>Add to Cart</b>.</li>
+          <li>Click <b>Continue</b>. In the <b>Artwork</b> tab, drag the PDF in or click <b>Upload files</b>.</li>
+          <li>Flip through the <b>Preview</b> and open the <b>PDF Proof</b>. Check nothing important on the cover crosses the trim line. Then fill in <b>Details</b> and <b>Payment</b>.</li>
+        </ol>
+        <p class="fine">File: Letter 8.5 × 11 in trim, 0.125 in bleed on every side, page count a multiple of 4. Steps checked against mixam.com on 28 Oct 2026.</p>
+      </div>
+
+      <div id="m-perfect" hidden>
+        <div class="papers">
+          <label>Inside paper <select id="paper"><option value="7">70lb Text</option><option value="8" selected>80lb Text</option><option value="9">100lb Text</option></select></label>
+          <label>Cover paper <select id="coverpaper"><option value="1">80lb Cover</option><option value="2" selected>100lb Cover</option><option value="3">110lb Cover</option><option value="5">130lb Cover</option></select></label>
+        </div>
+        <p class="spine">Spine <b id="spinev">—</b> <small id="spinecalc"></small></p>
+        <div class="spreadbox"><canvas id="spreadcv" aria-label="Cover spread: back, spine, front"></canvas></div>
+        <p class="hint" id="spreaddim"></p>
+        <button class="go wide dl" data-printer="mixam" data-part="interior">Download the inside pages (PDF)</button>
+        <button class="go wide dl alt" data-printer="mixam" data-part="cover">Download the cover (PDF)</button>
+        <ol class="how">
+          <li>Go to <a href="https://mixam.com/magazines" target="_blank" rel="noopener">mixam.com/magazines</a> and scroll to <b>Create Your Magazines</b>.</li>
+          <li><b>Quantity</b>: how many copies you want. <b>Color Printing</b>: <b>Color</b>.</li>
+          <li><b>Orientation</b>: <b>Portrait</b>. <b>Size</b>: <b>Letter (8.5" x 11")</b>. The bleed is already in both files.</li>
+          <li><b>Paper Type</b>: <b>Coated</b>, then <b>Satin</b>. <b>Paper Weight</b>: <b class="pw">80lb Text</b>, the same as above, because the spine width depends on it.</li>
+          <li><b>Choose Binding</b>: <b>Perfect (PUR)</b>. <b>Pages</b>: set it to <b class="np">—</b>. That is the inside pages only; the cover is counted separately.</li>
+          <li><b>Cover Paper Type</b>: <b>Coated (2-Sided)</b>, then <b>Satin</b>. <b>Cover Paper Weight</b>: <b class="cw">100lb Cover</b>. <b>Cover Printing</b>: <b>Color</b>. <b>Inner Cover Printing</b>: <b>No</b>.</li>
+          <li><b>Choose Cover Finish</b>: <b>Gloss Lamination</b> or <b>Matte Lamination</b>.</li>
+          <li>Under <b>Choose Price and Shipping Date</b>, pick one. <b>Design Option</b>: <b>Upload Own Artwork</b>, then <b>Add to Cart</b>.</li>
+          <li>In the cart, find <b>Spine Width</b>. If it isn't <b><span class="sv">—</span> inch</b>, type Mixam's number here and download the cover again: <input id="spineover" type="number" inputmode="decimal" step="0.01" min="0.03" max="2.5" placeholder="0.00" aria-label="Spine width from Mixam's cart, inches"> in</li>
+          <li>Click <b>Continue</b>. In the <b>Artwork</b> tab, upload both files: the inside pages and the cover.</li>
+          <li>Flip through the <b>Preview</b> and open the <b>PDF Proof</b>. Check the spine lines up and nothing important on the cover crosses the trim line. Then fill in <b>Details</b> and <b>Payment</b>.</li>
+        </ol>
+        <p class="fine">Inside pages: Letter 8.5 × 11 in trim, 0.125 in bleed, a multiple of 4 pages (at least 32). Cover: one spread, back on the left, front on the right, spine in the middle, 0.125 in bleed on every side. The spine is Mixam's calipers for the paper you picked; Mixam's cart has the final word, and can shift the spine up to 0.08 in, so the back, spine and front share one colour. Checked against mixam.com on 28 Oct 2026.</p>
+      </div>
     </div>
 
     <div class="panel" id="p-fedex">

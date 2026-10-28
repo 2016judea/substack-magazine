@@ -4,8 +4,9 @@
 
 Turn your Substack into a physical magazine. Enter your Substack username, pick the posts you want,
 name the magazine, and it lays them out as a printed issue you can page through. Upload your own
-cover art, try five typefaces, then download a print-ready PDF with step-by-step ordering
-instructions for Mixam (a stapled magazine) or FedEx Office (letter pages, same-day pickup).
+cover art, try five typefaces, then download print-ready PDFs with step-by-step ordering
+instructions for Mixam (stapled up to 96 pages, perfect bound past that) or FedEx Office (letter
+pages, same-day pickup).
 
 ## How it works
 
@@ -21,11 +22,27 @@ instructions for Mixam (a stapled magazine) or FedEx Office (letter pages, same-
 
 ## The print files
 
-| | Mixam | FedEx Office |
-|---|---|---|
-| Page | 8.5 × 11 in trim + 0.125 in bleed (630 × 810 pt), TrimBox and BleedBox set | 8.5 × 11 in, no bleed |
-| Cover | Art runs to the bleed edge | Art inside a 0.25 in border, since FedEx prints with a margin |
-| Pages | Multiple of 4 (saddle stitch), minimum 8, padded with ruled Notes pages | Same pages |
+| | Mixam, staple | Mixam, Perfect (PUR) | FedEx Office |
+|---|---|---|---|
+| Files | One PDF, cover is page 1 | Inside pages PDF + one cover spread PDF (back, spine, front) | One PDF |
+| Page | 8.5 × 11 in trim + 0.125 in bleed (630 × 810 pt), TrimBox and BleedBox set | Same, inside pages | 8.5 × 11 in, no bleed |
+| Pages | Multiple of 4, 8 to 96 | Inside pages a multiple of 4, at least 32 | Same pages as staple |
+| Cover | Art runs to the bleed edge | Spread is 17 in + spine + 0.25 in bleed wide; art fills the front panel to the bleed | Art inside a 0.25 in border |
+
+The spine is computed from Mixam's own paper calipers (read from its calculator's product data)
+with the rule its standard US plants quote: `floor(pages / 2 × caliper, to 0.01 in) + 0.01 in`.
+Checked against 14 live quotes and the cart on 2026-10-28; the source and the exceptions are in
+the comment above `spineCalc` in `public/app.js`. If Mixam's cart shows a different spine width,
+the user types it in and downloads the cover again.
+
+## Layout rules
+
+Every essay starts at the top of a page. One that overflows by a few lines is set up to 6%
+tighter to fit; a long one never ends on a page under a quarter full (tighten, loosen the
+leading, or end earlier pages a little short). No paragraph leaves one line alone at the foot or
+head of a page, a heading keeps three lines under it, and an image that doesn't fit lets the
+text run on and goes to the top of the next page. Padding Mixam needs is blank pages before the
+back cover.
 
 Nothing is stored. Posts are fetched from Substack's public API and the PDF is built in the browser.
 
