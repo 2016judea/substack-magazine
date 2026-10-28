@@ -583,10 +583,17 @@ $("#gen").addEventListener("click", async () => {
   btn.disabled = true; let done = 0;
   msg.textContent = `Fetching ${sel.length} posts…`;
   try {
-    await pool(sel, 6, async (p) => {
+    await pool(sel, 3, async (p) => {
       const k = keyOf(p);
       if (!state.bodies.has(k)) {
-        try { const d = await api(`/api/post?host=${encodeURIComponent(p.host)}&slug=${encodeURIComponent(p.slug)}`); state.bodies.set(k, { ...d, blocks: blocksOf(d.html) }); }
+        try {
+          let d = null;
+          for (let a = 0; a < 4 && !d; a++) {
+            try { d = await api(`/api/post?host=${encodeURIComponent(p.host)}&slug=${encodeURIComponent(p.slug)}`); }
+            catch (e) { if (a === 3) throw e; await new Promise((r) => setTimeout(r, 1500 * (a + 1))); }
+          }
+          state.bodies.set(k, { ...d, blocks: blocksOf(d.html) });
+        }
         catch (e) { state.bodies.set(k, { title: p.title, subtitle: p.subtitle, date: p.date, audience: p.audience, blocks: [{ t: "p", runs: [{ text: "(This post couldn't be loaded from Substack.)", i: true }] }] }); }
       }
       msg.textContent = `Fetched ${++done} of ${sel.length} posts…`;
