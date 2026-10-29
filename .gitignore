@@ -6,3 +6,8 @@ editions/**/qa/
 editions/2025/build/
 editions/2025/src/
 editions/2025/fonts/
+editions/2024/src/
+editions/2024/fonts/*.ttf
+editions/2024/fonts/src/
+editions/2024/issue.html
+editions/2024/content.json
