@@ -61,6 +61,19 @@ def blocks_of(node, out, imgs):
         else:
             out.append({"type": "p", "html": inline(c).strip(), "_tag": c.name})
 
+def page_archive():
+    """Every 2025 post of aidanjude.substack.com: page by rows returned until an empty page (a page caps ~24)."""
+    os.makedirs(f"{SRC}/posts", exist_ok=True); rows, o = [], 0
+    while True:
+        j = json.loads(subprocess.run(["curl", "-s", f"https://aidanjude.substack.com/api/v1/archive?sort=new&offset={o}&limit=50"], capture_output=True, text=True).stdout)
+        if not j: break
+        rows += j; o += len(j)
+    y = sorted({p["slug"]: p for p in rows if p["post_date"].startswith("2025")}.values(), key=lambda p: p["post_date"])
+    json.dump(y, open(f"{SRC}/archive_2025.json", "w"))
+    for p in y:
+        out = subprocess.run(["curl", "-s", f"https://aidanjude.substack.com/api/v1/posts/{p['slug']}"], capture_output=True, text=True).stdout
+        open(f"{SRC}/posts/{p['slug']}.json", "w").write(out)
+if not os.path.exists(f"{SRC}/archive_2025.json"): page_archive()
 arch = json.load(open(f"{SRC}/archive_2025.json"))
 corpus = []
 os.makedirs(f"{SRC}/img", exist_ok=True)
