@@ -1,3 +1,8 @@
 .vercel
 node_modules
 .DS_Store
+editions/**/press/
+editions/**/qa/
+editions/2025/build/
+editions/2025/src/
+editions/2025/fonts/
