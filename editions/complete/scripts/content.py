@@ -55,7 +55,7 @@ SKIP_IMG = {("dec-25", 5)}
 
 URL = re.compile(r"(https?://\S+)")
 # Substack keeps some emoji as shortcodes in body_html; the characters he typed, not the codes
-BR_PARAS = {"short-stories"}
+BR_PARAS = {"short-stories", "dream-comet", "dream-oratory", "dream-a-higher-power"}
 VERSE_PARAS = {"love-letters-to-some-girl-i-havent"}   # each <p> is a line of verse, set flush left
 NUMBERED = {"short-stories"}   # h2 "One".."Six" number the stories; set at the sub-head level   # prose whose paragraphs Substack joined with <br><br>
 EMOJI = {":eyes:": "👀", ":flame:": "🔥", ":rocket:": "🚀"}

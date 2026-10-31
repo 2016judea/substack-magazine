@@ -27,7 +27,8 @@ def spine_in(pages):  # substack-magazine/public/app.js spineCalc: standard US p
 def paginate(lengths):
     """plan + the essay -> first page map, from each essay's page count"""
     year = {s: C.Post(s, {}).year for s in C.SLUGS}
-    plan, n, used = ["title", "contents"], 4, []      # pages 1, 2-3
+    # the contents moved to the inner front cover (Aidan, 2026-10-31): the body opens on the title page
+    plan, n, used = ["title"], 2, []
     def line(after_year):
         cand = [i for i, (sl, t) in enumerate(Bd.LINES) if i not in used and year[sl] == after_year] or \
                [i for i in range(len(Bd.LINES)) if i not in used]
@@ -51,7 +52,6 @@ def kinds(plan, lengths, posts):
     out = []
     for it in plan:
         if it == "title": out.append(("title", ""))
-        elif it == "contents": out += [("contents", ""), ("contents", "")]
         elif it[0] in ("div", "line"): out.append((it[0], ""))
         else:
             p = posts[it[1]]
@@ -236,11 +236,20 @@ def main():
             ov = f"{B}/{tag.lower()}-overlay.pdf"; rr.pdf(overlay_html(ks, press), ov, tag.lower() + "-overlay")
             body = f"{B}/{tag.lower()}-merged.pdf"; merge(raw, ov, body)
             if press:
-                dst = f"{P}/AIDAN-JUDE-COMPLETE-INTERIOR.pdf"; os.replace(body, dst)
+                # Mixam Perfect, cover printed 4/4: 1-cover.pdf (outside spread), 2-interior.pdf (body),
+                # inner-front.pdf (contents, faces body p1), inner-back.pdf (the book's last page, faces p{total})
+                for f in ("AIDAN-JUDE-COMPLETE-INTERIOR.pdf", "AIDAN-JUDE-COMPLETE-COVER.pdf"):
+                    if os.path.exists(f"{P}/{f}"): os.remove(f"{P}/{f}")
+                dst = f"{P}/2-interior.pdf"; os.replace(body, dst)
                 boxes(dst, True, "Aidan Jude · Periodicals · 2023–2026 (inside pages)")
-                cv = f"{P}/AIDAN-JUDE-COMPLETE-COVER.pdf"; rr.pdf(cover_doc(True, len(C.SLUGS), sp_pt), cv, "cover")
+                cv = f"{P}/1-cover.pdf"; rr.pdf(cover_doc(True, len(C.SLUGS), sp_pt), cv, "cover")
                 boxes(cv, True, "Aidan Jude · Periodicals · 2023–2026 (cover)")
-                out["interior"], out["cover"] = dst, cv
+                inf = f"{P}/inner-front.pdf"; rr.pdf(Bd.document(True, ["contents1"], toc, tune, fit, marks=False)[0], inf, "inner-front")
+                inb = f"{P}/inner-back.pdf"; rr.pdf(Bd.document(True, [("ending", Bd.ENDING[0])], toc, tune, fit, marks=False)[0], inb, "inner-back")
+                for f, t in ((inf, "inner front cover"), (inb, "inner back cover")):
+                    assert len(PdfReader(f).pages) == 1, (f, len(PdfReader(f).pages))
+                    boxes(f, True, f"Aidan Jude · Periodicals · 2023–2026 ({t})")
+                out.update(interior=dst, cover=cv, inner_front=inf, inner_back=inb)
             else:
                 fr, bk = f"{B}/fx-front.pdf", f"{B}/fx-back.pdf"
                 rr.pdf(cover_doc(False, len(C.SLUGS), single="front"), fr, "fx-front")

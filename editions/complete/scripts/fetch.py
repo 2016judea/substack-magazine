@@ -39,10 +39,11 @@ posts = sorted({p["slug"]: p for p in rows if p.get("type", "newsletter") == "ne
 posts = [p for p in posts if p["slug"] != "goodreads"]     # a page, not a post
 nper = len(posts)
 
-# Three pieces from his other newsletter that he chose for this book (Aidan, 2026-10-30), placed in
+# Pieces from his other newsletter that he chose for this book (Aidan, 2026-10-30 and 10-31), placed in
 # date order inside 2026. Only these, by name; nothing else from randomaidan ever goes in.
 EXTRA_HOST = "https://randomaidan.substack.com"
-EXTRA = ["short-stories", "collected-poems", "love-letters-to-some-girl-i-havent"]
+EXTRA = ["short-stories", "collected-poems", "love-letters-to-some-girl-i-havent",
+         "dream-comet", "dream-oratory", "dream-a-higher-power"]      # the three dreams added 10/31
 for slug in EXTRA:
     fn = f"{S}/posts/{slug}.json"
     if not (os.path.exists(fn) and os.path.getsize(fn) > 100):

@@ -5,10 +5,12 @@
   - every font embedded
   - no image printed twice; every image's effective ppi (flag < 200)
   - no text inside the outer 0.25 in of the trim (bleed pages excepted: they carry no text there)
-  - all 54 pieces present (51 Periodicals posts + the 3 randomaidan pieces he chose), in date order, each opening on its own page under its own title
+  - body exactly 152 pages; inner covers one page each, no folio
+  - all 57 pieces present (51 Periodicals posts + the 6 randomaidan pieces he chose), in date order, each opening on its own page under its own title
   - no other text from randomaidan.substack.com or visionboards (8-word shingles against the corpus);
     only ALLOWED, by slug, may come from randomaidan
-  - every word he wrote is in the book (token multiset of each post vs the PDF)
+  - every word he wrote is in the book: body + inner back cover (token multiset of each post vs the PDFs)
+  - the contents on the inner front cover gives every piece its opener page
 """
 import hashlib, json, os, re, subprocess, sys
 from collections import Counter
@@ -21,6 +23,7 @@ from bs4 import BeautifulSoup
 R = Bd.R; bad = []
 pj = json.load(open(f"{Bd.B}/press.json"))
 INT, CV = pj["out"]["interior"], pj["out"]["cover"]
+IF, IB = pj["out"]["inner_front"], pj["out"]["inner_back"]
 
 def check_boxes(f, bl, w, h):
     r = PdfReader(f)
@@ -34,12 +37,15 @@ def check_boxes(f, bl, w, h):
 
 n = check_boxes(INT, 9, 612, 792)
 if n % 4: bad.append(f"interior: {n} pages, not a multiple of 4")
+if n != 152: bad.append(f"interior: {n} pages, his Mixam cart is set to 152")
+for f in (IF, IB):
+    if check_boxes(f, 9, 612, 792) != 1: bad.append(f"{os.path.basename(f)}: not one page")
 
 sw = 2 * 612 + pj["spine_in"] * 72
 check_boxes(CV, 9, sw, 792)
 print(f"interior {n} pp (multiple of 4: {n % 4 == 0}); cover spread {sw/72:.3f} x 11 in trim, spine {pj['spine_in']:.2f} in")
 
-for f in (INT, CV):
+for f in (INT, CV, IF, IB):
     rows = subprocess.run(["pdffonts", f], capture_output=True, text=True).stdout.splitlines()[2:]
     ne = [l for l in rows if l.split()[-5] != "yes"]
     names = sorted({l.split()[0].split("+")[-1] for l in rows})
@@ -48,22 +54,24 @@ for f in (INT, CV):
 
 kinds = pj["kinds"]
 hs, low, ppis = [], [], []
-with pdfplumber.open(INT) as d:
-    texts, reading = [], []
-    for i, pg in enumerate(d.pages):
-        k = kinds[i][0]
+texts, reading = [], []
+def proc(i, pg, k, label):
         for im in pg.images:
-            hs.append((hashlib.md5(im["stream"].get_data()).hexdigest(), i + 1))
+            hs.append((hashlib.md5(im["stream"].get_data()).hexdigest(), label))
             ppi = im["srcsize"][0] / ((im["x1"] - im["x0"]) / 72); ppis.append(ppi)
-            if ppi < 199.5: low.append((i + 1, round(ppi)))
+            if ppi < 199.5: low.append((label, round(ppi)))
         if k != "div":
             for c in pg.chars:
                 if c["size"] < 1.5: continue
                 if c["x0"] < 27 or c["x1"] > pg.width - 27 or c["top"] < 27 or c["bottom"] > pg.height - 27:
-                    bad.append(f"p{i+1}: text in the outer 0.25 in: {c['text']!r}"); break
-        texts.append((pg.extract_text() or "").replace("ʼ", "’"))
+                    bad.append(f"{label}: text in the outer 0.25 in: {c['text']!r}"); break
+        txt = (pg.extract_text() or "").replace("ʼ", "’")
+        if k != "innerfront": texts.append(txt)
+        if k in ("innerfront", "innerback") and re.search(r"(?m)^\s*\d{1,3}\s*$", "\n".join(l for l in txt.split("\n")[-2:])) and k == "innerback":
+            bad.append(f"{label}: carries a folio")
+        if k == "innerfront": return txt
         # words in reading order: column by column, a line-end hyphen rejoined with the next line
-        mid = pg.width / 2 + (9 if (i + 1) % 2 == 0 else -9) * 0 + ((48 - 62) / 2 if (i + 1) % 2 == 0 else (62 - 48) / 2)
+        mid = pg.width / 2 + ((48 - 62) / 2 if (i + 1) % 2 == 0 else (62 - 48) / 2)
         ws = [w for w in pg.extract_words(keep_blank_chars=False) if w["bottom"] - w["top"] > 1.5 and 60 < w["top"] < pg.height - 60]
         ws.sort(key=lambda w: (0 if w["x0"] < mid else 1, round(w["top"]), w["x0"]))
         out = reading
@@ -71,6 +79,10 @@ with pdfplumber.open(INT) as d:
             t = w["text"].replace("ʼ", "’")
             if out and re.search(r"[A-Za-z][-‐]$", out[-1]) and re.match(r"[a-z]", t): out[-1] = out[-1][:-1] + "\u0001" + t
             else: out.append(t)
+with pdfplumber.open(INT) as d:
+    for i, pg in enumerate(d.pages): proc(i, pg, kinds[i][0], f"p{i+1}")
+with pdfplumber.open(IB) as d: proc(152, d.pages[0], "innerback", "inner back")    # a right-hand page
+with pdfplumber.open(IF) as d: contents_txt = proc(1, d.pages[0], "innerfront", "inner front")
 
 cnt = Counter(h for h, _ in hs); dup = [(h[:8], [p for hh, p in hs if hh == h]) for h, c in cnt.items() if c > 1]
 if dup: bad.append(f"repeated images: {dup}")
@@ -89,13 +101,18 @@ for s in order:
     pgt = texts[toc[s] - 1].replace("\n", " ")
     if re.sub(r"\s+", "", t) not in re.sub(r"\s+", "", pgt): miss.append((s, toc[s]))
 if miss: bad.append(f"titles not found on their opener pages: {miss}")
+flat_toc = re.sub(r"\s+", "", contents_txt.replace("ʼ", "’"))
+wrong = [s for s in order if re.sub(r"\s+", "", C.Post(s, {}).title) + str(toc[s]) not in flat_toc]
+if wrong: bad.append(f"contents page numbers wrong or missing: {wrong}")
+print(f"contents (inner front): {len(order) - len(wrong)}/{len(order)} titles with their page numbers")
 print(f"posts: {len(order)} in the book, {len(set(order))} distinct, chronological {dates == sorted(dates)}, openers found {len(order) - len(miss)}/{len(order)}")
 
 # nothing from randomaidan or visionboards
 cor = json.load(open(os.path.expanduser("~/Desktop/writing-topology/data/personal_corpus/substack_all.json")))
-ALLOWED = {"short-stories", "collected-poems", "love-letters-to-some-girl-i-havent"}   # Aidan, 2026-10-30
+ALLOWED = {"short-stories", "collected-poems", "love-letters-to-some-girl-i-havent",   # Aidan, 2026-10-30
+           "dream-comet", "dream-oratory", "dream-a-higher-power"}                       # and 2026-10-31
 foreign = [c for c in cor if "aidanjude.substack.com" not in c["url"] and c["url"].rstrip("/").rsplit("/", 1)[1] not in ALLOWED]
-assert len(C.SLUGS) == 54 and ALLOWED <= set(C.SLUGS), len(C.SLUGS)
+assert len(C.SLUGS) == 57 and ALLOWED <= set(C.SLUGS), len(C.SLUGS)
 if set(C.SLUGS) - ALLOWED - {c["url"].rstrip("/").rsplit("/", 1)[1] for c in cor if "aidanjude.substack.com" in c["url"]}:
     bad.append("a piece that is neither a Periodicals post nor an allowed randomaidan piece")
 tok = lambda t: re.findall(r"[a-z0-9’']+", t.lower().replace("’", "'"))

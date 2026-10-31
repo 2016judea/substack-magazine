@@ -2,7 +2,7 @@
 
 **Live:** https://aidanjude-periodicals.vercel.app
 
-All 51 posts from aidanjude.substack.com (January 2023 to October 2026), plus three pieces he chose from randomaidan.substack.com, as a magazine you page through:
+All 51 posts from aidanjude.substack.com (January 2023 to October 2026), plus six pieces he chose from randomaidan.substack.com, as a magazine you page through:
 spreads on a desktop, one page at a time on a phone, a Contents menu, arrows, swipe, pinch to read.
 
 - `build.py` writes `public/index.html` and `public/img/`. The words, pictures and credits come from

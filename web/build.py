@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Periodicals on the web: all 51 posts (plus the three randomaidan pieces he chose) in Credo's reader, typeset in the print edition's face and colours.
+"""Periodicals on the web: all 51 posts (plus the six randomaidan pieces he chose) in Credo's reader, typeset in the print edition's face and colours.
 
   python3 web/build.py      ->  web/public/index.html + web/public/img/
 
@@ -116,7 +116,7 @@ PIECES = []
 for s in C.SLUGS:
     p = C.Post(s, {})
     PIECES.append(dict(slug=s, title=p.title, deck=p.sub, eyebrow=p.date, mov=str(p.year), blocks=blocks_for(p), mode=p.mode))
-assert len(PIECES) == 54, len(PIECES)   # 51 Periodicals posts + 3 randomaidan pieces he chose (10/30)
+assert len(PIECES) == 57, len(PIECES)   # 51 Periodicals posts + 6 randomaidan pieces he chose (10/30, 10/31)
 assert len(USED) == len(set(USED)), [u for u in USED if USED.count(u) > 1]   # no picture printed twice
 
 # ---------- pictures: his files, sized for a screen (long edge 1600 px), never upscaled ----------
@@ -285,7 +285,8 @@ body{font-optical-sizing:auto}
 .tx .url{overflow-wrap:anywhere}
 .tx a.url{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--g)}
 .fig figcaption{white-space:pre-line;font-size:14px;line-height:1.45}
-.page.contents .toc-list{gap:1px;font-size:18px;line-height:1.2}
+.page.contents .toc-list{gap:2px;font-size:17px;line-height:1.15}
+.page.contents .toc-list a b{font-size:15px;line-height:1}
 .page.contents .toc-list h5{font:300 34px/1 var(--disp);letter-spacing:-.01em;text-transform:none;margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--k)}
 .page.contents .toc-list h5:first-child{margin-top:4px}
 """

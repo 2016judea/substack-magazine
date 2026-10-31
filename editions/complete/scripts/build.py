@@ -63,6 +63,9 @@ def css(press, tune):
 @page :left{{margin:{TOP+b}pt {INNER+b}pt {BOT+b}pt {OUTER+b}pt}}
 @page :right{{margin:{TOP+b}pt {OUTER+b}pt {BOT+b}pt {INNER+b}pt}}
 @page bleed{{margin:0}} @page bleed:left{{margin:0}} @page bleed:right{{margin:0}}
+@page innerl{{margin:{TOP+b}pt {INNER+b}pt {BOT+b}pt {OUTER+b}pt}}
+@page innerr{{margin:{TOP+b}pt {OUTER+b}pt {BOT+b}pt {INNER+b}pt}}
+.innerl{{page:innerl}} .innerr{{page:innerr}}
 html{{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 body{{margin:0;font:10.25pt/{LEAD}pt SSText-Regular;color:{INK};font-kerning:normal;font-variant-numeric:oldstyle-nums proportional-nums;
   text-rendering:optimizeLegibility;hyphens:auto;-webkit-hyphens:auto;widows:2;orphans:2;background:#fff;font-synthesis:none}}
@@ -89,6 +92,14 @@ section{{break-before:page}}
 .toc{{display:grid;grid-template-columns:1fr auto;column-gap:10pt;row-gap:6.5pt}}
 .toc .tt{{font:10.25pt/13pt SSText-Regular;hyphens:manual}} .toc .ts{{display:block;font:8.6pt/11pt SSText-Italic;color:{MUTE};hyphens:manual;margin-top:.5pt}}
 .toc .tn{{font:10.25pt/13pt SSText-Regular;font-variant-numeric:oldstyle-nums tabular-nums;text-align:right}}
+/* the inner front cover: every piece on one page, titles and page numbers; "Contents" heads the
+   left column (2023, 2024), the right column (2025, 2026) runs from the top of the page */
+.contents1{{height:{TH-2}pt;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;column-gap:24pt}}
+.contents1 h1{{grid-column:1;grid-row:1;margin:0 0 22pt;font:38pt/40pt SSDisp-Regular;letter-spacing:-.01em}}
+.contents1 .c1{{grid-column:1;grid-row:2}} .contents1 .c2{{grid-column:2;grid-row:1/3}}
+.contents1 .py{{font:22pt/1 SSDisp-Light;color:{ACC};margin:0 0 9pt;padding-top:7pt;border-top:.6pt solid {INK}}}
+.contents1 .part+.part{{margin-top:16pt}}
+.contents1 .toc{{row-gap:3pt}}
 .linep{{height:{TH}pt;display:flex;flex-direction:column;justify-content:flex-end}}
 .linep p{{margin:0;font:27pt/33pt SSDisp-Regular;letter-spacing:-.004em;hyphens:manual;max-width:410pt;text-wrap:balance}}
 
@@ -186,6 +197,7 @@ def end_mark(html_):
 def essay(p, fit, tune, marks):
     head = opener(p, fit)
     main, tail = p.body_html()
+    if p.slug == ENDING[0]: main, tail = split_ending(main)[0], []     # the rest is the inner back cover
     mt = tune.get(p.slug, {}).get("coda_mt", 0)
     body = "".join(main)
     if tail:
@@ -193,7 +205,7 @@ def essay(p, fit, tune, marks):
             body += end_mark("".join(tail))
         else:
             body += f'<div class="coda" style="padding-top:{mt:.1f}pt">{end_mark("".join(tail))}</div>'
-    else:
+    elif p.slug != ENDING[0]:
         body = end_mark(body)
     from collections import Counter as _C
     for t, k in _C(tune.get(p.slug, {}).get("brk", [])).items():
@@ -234,8 +246,29 @@ def contents(posts, toc, marks):
     return (f'<section class="contents">{mk}<h1>Contents</h1><div>{cols[0]}</div><div>{cols[1]}</div></section>'
             f'<section class="contents"><h1>&nbsp;</h1><div>{cols[2]}</div><div>{cols[3]}</div></section>')
 
+def contents1(posts, toc, marks):
+    """the contents on one page, for the inner front cover: titles and page numbers"""
+    mk = f'<div class="mk">{"@c:1@" if marks else ""}</div>'
+    part = lambda y: (f'<div class="part"><div class="py">{y}</div><div class="toc">' +
+                      "".join(f'<div class="tt">{esc(p.title)}</div><div class="tn">{toc.get(p.slug, "")}</div>' for p in posts if p.year == y) + '</div></div>')
+    return (f'<section class="contents1 innerl">{mk}<h1>Contents</h1><div class="c1">{part(2023)}{part(2024)}</div>'
+            f'<div class="c2">{part(2025)}{part(2026)}</div></section>')
+
+# The last page of the book is printed on the inner back cover (Aidan, 2026-10-31): the final piece is
+# split before the block that opened its last page, and the rest is set alone on a right-hand page.
+ENDING = ("oct-26-pt2", "he haunted vast arcades,")
+
+def split_ending(main):
+    k = next(i for i, b in enumerate(main) if ENDING[1] in re.sub(r"<[^>]+>", "", b))
+    return main[:k], main[k:]
+
+def ending(p, fit, tune, marks):
+    main, tail = p.body_html()
+    end = end_mark("".join(split_ending(main)[1]) + "".join(tail))
+    return f'<section class="essay {p.mode} innerr" id="e-{p.slug}-end"><div class="body">{end}</div></section>'
+
 def document(press, plan, toc=None, tune=None, fit=None, marks=True):
-    """plan: list of ("title"|"contents"|("div",y)|("essay",slug)|("line",i))"""
+    """plan: list of ("title"|"contents"|"contents1"|("div",y)|("essay",slug)|("line",i)|("ending",slug))"""
     toc = toc or {}; tune = tune or {}; fit = fit or {}
     posts = {s: C.Post(s, fit) for s in C.SLUGS}
     parts = []
@@ -243,8 +276,10 @@ def document(press, plan, toc=None, tune=None, fit=None, marks=True):
         if it == "title":
             parts.append(f'<section class="titlep"><div class="mk">{"@t:1@" if marks else ""}</div><div class="t1">Aidan Jude</div><div class="t2">Periodicals&nbsp;&nbsp;·&nbsp;&nbsp;2023–2026</div></section>')
         elif it == "contents": parts.append(contents(list(posts.values()), toc, marks))
+        elif it == "contents1": parts.append(contents1(list(posts.values()), toc, marks))
         elif it[0] == "div": parts.append(divider(it[1], marks))
         elif it[0] == "essay": parts.append(essay(posts[it[1]], fit, tune, marks))
+        elif it[0] == "ending": parts.append(ending(posts[it[1]], fit, tune, marks))
         elif it[0] == "line": parts.append(linepage(it[1], marks))
     figs = {f["id"]: f for p in posts.values() for f in p.figs}
     htm = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Aidan Jude · Periodicals · 2023–2026</title>'
