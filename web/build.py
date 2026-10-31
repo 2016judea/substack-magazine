@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Periodicals on the web: all 51 posts in Credo's reader, typeset in the print edition's face and colours.
+"""Periodicals on the web: all 51 posts (plus the three randomaidan pieces he chose) in Credo's reader, typeset in the print edition's face and colours.
 
   python3 web/build.py      ->  web/public/index.html + web/public/img/
 
@@ -81,6 +81,7 @@ def blocks_for(p):
             b = {"t": "p", "v": clean(inl(e))}
             if "disp" in cl: b["cls"] = "disp " + [c for c in cl if c != "disp"][0]
             elif "riff" in cl: b["cls"] = "riff"
+            elif "vl" in cl: b["cls"] = "vl"          # a line of verse he set as a paragraph: no drop cap
             out.append(b); continue
         if e.name in ("ul", "ol"):
             # nested lists flatten to one item per line of his list, each keeping its depth and number,
@@ -115,7 +116,7 @@ PIECES = []
 for s in C.SLUGS:
     p = C.Post(s, {})
     PIECES.append(dict(slug=s, title=p.title, deck=p.sub, eyebrow=p.date, mov=str(p.year), blocks=blocks_for(p), mode=p.mode))
-assert len(PIECES) == 51, len(PIECES)
+assert len(PIECES) == 54, len(PIECES)   # 51 Periodicals posts + 3 randomaidan pieces he chose (10/30)
 assert len(USED) == len(set(USED)), [u for u in USED if USED.count(u) > 1]   # no picture printed twice
 
 # ---------- pictures: his files, sized for a screen (long edge 1600 px), never upscaled ----------
@@ -235,6 +236,8 @@ sub("function nextPage(slug){", "function shrinkAbove(node,need){const pr=node.p
 sub("else if(spec.kind==='img'){const i=el('img');i.src=spec.src;", "else if(spec.kind==='img'){const i=el('img');i.loading='lazy';i.decoding='async';i.src=spec.src;")
 # his subtitle stands under the title, in the opener
 sub("const h=el('h2',null,H(f.title));", "const h=el('h2',null,H(f.title)+(f.deck?`<span class=\"deck\">${H(f.deck)}</span>`:''));")
+# a piece that opens on a line of verse set as a paragraph takes no drop cap
+sub("const hasLede=f.blocks[0]&&f.blocks[0].t==='p';", "const hasLede=f.blocks[0]&&f.blocks[0].t==='p'&&f.blocks[0].cls!=='vl';")
 # contents: four years over two pages (2023 and 2024, then 2025 and 2026); no colophon
 sub("  const contents=newPage('contents');", "  const contents=newPage('contents'),contents2=newPage('contents');")
 sub("""  contents.insertAdjacentHTML('beforeend',`<div class="tx"><div class="eyebrow">Contents</div><div class="toc-list">${secs.map(s=>`<h5>${esc(s.m.num)} · ${esc(s.m.title)}</h5>`+s.items.map(f=>`<a href="#p${firstPage[f.slug]}" data-p="${firstPage[f.slug]}"><span>${H(f.title)}</span><i class="d"></i><b>${firstPage[f.slug]}</b></a>`).join('')).join('')}</div><p class="colophon">${esc(J.name)} · No. ${J.no||1} · ${J.sub?esc(J.sub)+' · ':''}${esc(J.span)} · ${pages.length} pages · Set in DM Serif Display, Newsreader and JetBrains Mono</p></div>`);""",
@@ -282,8 +285,8 @@ body{font-optical-sizing:auto}
 .tx .url{overflow-wrap:anywhere}
 .tx a.url{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--g)}
 .fig figcaption{white-space:pre-line;font-size:14px;line-height:1.45}
-.page.contents .toc-list{gap:3px;font-size:19px;line-height:1.25}
-.page.contents .toc-list h5{font:300 34px/1 var(--disp);letter-spacing:-.01em;text-transform:none;margin:16px 0 6px;padding-top:12px;border-top:1px solid var(--k)}
+.page.contents .toc-list{gap:1px;font-size:18px;line-height:1.2}
+.page.contents .toc-list h5{font:300 34px/1 var(--disp);letter-spacing:-.01em;text-transform:none;margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--k)}
 .page.contents .toc-list h5:first-child{margin-top:4px}
 """
 sub("</style>", CSS + "</style>")

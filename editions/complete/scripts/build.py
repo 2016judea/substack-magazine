@@ -57,6 +57,7 @@ def css(press, tune):
     ff = "".join(f"@font-face{{font-family:{n};src:url({F}/{n}.ttf)}}"
                  f"@font-face{{font-family:{n};src:url({F}/NotoEmoji-Regular.ttf);unicode-range:U+1F000-1FAFF,U+2600-27BF,U+2B00-2BFF}}" for n in FONTS)
     t = "".join(f"#e-{k} .body{{letter-spacing:{v.get('ls',0)}em;word-spacing:{v.get('ws',0)}pt}}" for k, v in tune.items() if v.get("ls") or v.get("ws"))
+    t += "".join(f"#e-{k} h4.sub{{margin-top:{v['subtop']}pt}}" for k, v in tune.items() if v.get("subtop"))
     return ff + f"""
 @page{{size:{PW}pt {PH}pt;margin:0}}
 @page :left{{margin:{TOP+b}pt {INNER+b}pt {BOT+b}pt {OUTER+b}pt}}
@@ -128,7 +129,9 @@ blockquote.pull{{margin:10pt 0 11pt;padding:0;border:0}}
 blockquote.pull p{{font:13.6pt/17.5pt SSDeck-Italic;hyphens:manual;text-wrap:pretty}}
 .lit{{margin:6pt 0 7pt}}
 .lit .lt{{font-family:SSText-Italic;text-align:left;hyphens:manual}}
-.lit.verse .lt{{white-space:pre-wrap}}
+.lit.verse .lt{{white-space:pre-wrap;tab-size:2}}
+.body p.vl{{text-indent:0;text-align:left;hyphens:manual}}
+.lit.poem{{margin-top:2pt;break-inside:avoid}} .lit.poem .lt{{font-family:SSText-Regular}}
 .lit.prose .lt p{{text-align:justify;hyphens:auto;text-indent:0}} .lit.prose .lt p+p{{text-indent:1em}}
 .lit .att{{margin-top:5pt;font:8.6pt/12pt SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.12em;color:{MUTE}}}
 p.riff{{}}

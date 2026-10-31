@@ -5,8 +5,9 @@
   - every font embedded
   - no image printed twice; every image's effective ppi (flag < 200)
   - no text inside the outer 0.25 in of the trim (bleed pages excepted: they carry no text there)
-  - all 51 posts present, in date order, each opening on its own page under its own title
-  - no text from randomaidan.substack.com or visionboards (8-word shingles against the corpus)
+  - all 54 pieces present (51 Periodicals posts + the 3 randomaidan pieces he chose), in date order, each opening on its own page under its own title
+  - no other text from randomaidan.substack.com or visionboards (8-word shingles against the corpus);
+    only ALLOWED, by slug, may come from randomaidan
   - every word he wrote is in the book (token multiset of each post vs the PDF)
 """
 import hashlib, json, os, re, subprocess, sys
@@ -92,7 +93,11 @@ print(f"posts: {len(order)} in the book, {len(set(order))} distinct, chronologic
 
 # nothing from randomaidan or visionboards
 cor = json.load(open(os.path.expanduser("~/Desktop/writing-topology/data/personal_corpus/substack_all.json")))
-foreign = [c for c in cor if "aidanjude.substack.com" not in c["url"]]
+ALLOWED = {"short-stories", "collected-poems", "love-letters-to-some-girl-i-havent"}   # Aidan, 2026-10-30
+foreign = [c for c in cor if "aidanjude.substack.com" not in c["url"] and c["url"].rstrip("/").rsplit("/", 1)[1] not in ALLOWED]
+assert len(C.SLUGS) == 54 and ALLOWED <= set(C.SLUGS), len(C.SLUGS)
+if set(C.SLUGS) - ALLOWED - {c["url"].rstrip("/").rsplit("/", 1)[1] for c in cor if "aidanjude.substack.com" in c["url"]}:
+    bad.append("a piece that is neither a Periodicals post nor an allowed randomaidan piece")
 tok = lambda t: re.findall(r"[a-z0-9’']+", t.lower().replace("’", "'"))
 book = tok(" ".join(texts).replace("-\n", ""))
 ours = set()

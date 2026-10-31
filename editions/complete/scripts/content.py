@@ -55,6 +55,9 @@ SKIP_IMG = {("dec-25", 5)}
 
 URL = re.compile(r"(https?://\S+)")
 # Substack keeps some emoji as shortcodes in body_html; the characters he typed, not the codes
+BR_PARAS = {"short-stories"}
+VERSE_PARAS = {"love-letters-to-some-girl-i-havent"}   # each <p> is a line of verse, set flush left
+NUMBERED = {"short-stories"}   # h2 "One".."Six" number the stories; set at the sub-head level   # prose whose paragraphs Substack joined with <br><br>
 EMOJI = {":eyes:": "👀", ":flame:": "🔥", ":rocket:": "🚀"}
 # his recurring departments (2023, January '24): the h2s that group pieces rather than title one
 DEPTS = {"The News", "Ideas", "Creative Riff", "Preface", "Journal"}
@@ -213,6 +216,16 @@ class Post:
     def pre(self, el):
         t = el.get_text()
         t = t.replace(" ", " ")
+        if not t.strip(): return ""
+        if re.search(r"^\s*##\s*\S.*##\s*$", t, re.M) and self.sec not in ("Creative Riff", "Riff"):
+            # his collected poems in one block: each "## TITLE ##" line titles the poem under it
+            out = []
+            for m in re.finditer(r"^\s*##\s*(.+?)\s*##[ \t]*\n(.*?)(?=^\s*##\s*\S.*##\s*$|\Z)", t, re.M | re.S):
+                body = [l.rstrip() for l in m.group(2).strip("\n").split("\n")]
+                while body and not body[-1].strip(): body.pop()
+                body = self.unspace(body)
+                out.append(f'<h3 class="item">{esc(m.group(1))}</h3><div class="lit verse poem"><div class="lt">{esc(chr(10).join(body))}</div></div>')
+            return "".join(out)
         if re.fullmatch(r"[\s01HELOI\-]+", t) or "{" in t:
             return f'<pre class="code">{esc(t.rstrip())}</pre>'
         if self.sec in ("Creative Riff", "Riff"):
@@ -273,6 +286,9 @@ class Post:
 
     def heading(self, el):
         n = el.name; t = inline(el).strip()
+        if not text(el): return ""
+        if self.slug in NUMBERED and n == "h2":      # his numbered parts (One, Two ...) as sub-heads
+            return f'<h4 class="sub">{t}</h4>'
         if self.slug == "oct-26-pt2":           # his collage of display lines: the heading sizes are the poem
             return f'<p class="disp {n}">{t}</p>'
         if n == "h1": n = "h2"
@@ -298,7 +314,12 @@ class Post:
             if bold.strip() and bold.strip() == el.get_text().strip():
                 return f'<p class="bold">{inline(el)}</p>'
             c = ' class="hasurl"' if URL.search(el.get_text()) else ""
-            return f"<p{c}>{inline(el)}</p>"
+            h = inline(el)
+            if self.slug in BR_PARAS and "<br><br>" in h:
+                # his paragraph break typed as a blank line inside one paragraph: set as paragraphs
+                return "".join(f"<p{c}>{x.strip()}</p>" for x in h.split("<br><br>") if x.strip())
+            if self.slug in VERSE_PARAS: return f'<p class="vl">{h}</p>'
+            return f"<p{c}>{h}</p>"
         if n in ("ol", "ul"): return self.lst(el)
         if n == "blockquote":
             if el.find("pre"):
@@ -309,7 +330,7 @@ class Post:
         if "pullquote" in cl:
             ps = el.find_all("p") or [el]
             return '<blockquote class="pull">' + "".join(f'<p>{inline(p).strip()}</p>' for p in ps) + "</blockquote>"
-        if "preformatted-block" in cl: return self.pre(el.find("pre"))
+        if "preformatted-block" in cl or "highlighted_code_block" in cl: return self.pre(el.find("pre"))
         if n == "pre": return self.pre(el)
         if "youtube-wrap" in cl or (n == "iframe" and "spotify-wrap" in cl):
             k = f"{self.slug}-e{self.embn}"; self.embn += 1; e = EMB[k]
@@ -322,6 +343,7 @@ class Post:
     def body_html(self):
         bl = [self.block(e) for e in self.body_els]
         bl = [x for x in bl if x]
+        bl = [x for k, x in enumerate(bl) if not (x == '<div class="brk"></div>' and k and bl[k - 1] == x)]  # his doubled rule: one break
         # a figure too tall for the hole above it may follow the next paragraph instead: still after
         # the passage it belongs to, never before it
         k = 0

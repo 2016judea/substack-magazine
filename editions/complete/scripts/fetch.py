@@ -37,11 +37,23 @@ if not os.path.exists(f"{S}/archive.json"):
 rows = json.load(open(f"{S}/archive.json"))
 posts = sorted({p["slug"]: p for p in rows if p.get("type", "newsletter") == "newsletter"}.values(), key=lambda p: p["post_date"])
 posts = [p for p in posts if p["slug"] != "goodreads"]     # a page, not a post
+nper = len(posts)
+
+# Three pieces from his other newsletter that he chose for this book (Aidan, 2026-10-30), placed in
+# date order inside 2026. Only these, by name; nothing else from randomaidan ever goes in.
+EXTRA_HOST = "https://randomaidan.substack.com"
+EXTRA = ["short-stories", "collected-poems", "love-letters-to-some-girl-i-havent"]
+for slug in EXTRA:
+    fn = f"{S}/posts/{slug}.json"
+    if not (os.path.exists(fn) and os.path.getsize(fn) > 100):
+        open(fn, "w").write(get(f"{EXTRA_HOST}/api/v1/posts/{slug}")); time.sleep(1.5)
+    d = json.load(open(fn)); posts.append(dict(slug=slug, post_date=d["post_date"], title=d["title"]))
+posts.sort(key=lambda p: p["post_date"])
 
 # reconcile with the corpus (aidanjude.substack.com rows only)
 cor = [c for c in json.load(open(CORPUS)) if "aidanjude.substack.com" in c["url"]]
-cs = {c["url"].rstrip("/").rsplit("/", 1)[1] for c in cor}; ps = {p["slug"] for p in posts}
-print(f"archive {len(posts)} posts | corpus {len(cor)} | only archive {sorted(ps - cs)} | only corpus {sorted(cs - ps)}")
+cs = {c["url"].rstrip("/").rsplit("/", 1)[1] for c in cor}; ps = {p["slug"] for p in posts} - set(EXTRA)
+print(f"archive {nper} posts + {len(EXTRA)} chosen from randomaidan | corpus {len(cor)} | only archive {sorted(ps - cs)} | only corpus {sorted(cs - ps)}")
 from collections import Counter
 print(dict(sorted(Counter(p["post_date"][:4] for p in posts).items())))
 

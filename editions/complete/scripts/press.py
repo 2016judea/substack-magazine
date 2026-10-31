@@ -149,6 +149,7 @@ def merge(base, over, out):
 
 def main():
     j = json.load(open(f"{B}/fit.json")); fit, tune = j["fit"], j["tune"]
+    for s in C.SLUGS: tune.setdefault(s, {})        # pieces added after the fit (10/30) start untuned
     # page counts measured in the book itself (markers are DOM-identical in every render)
     def measure(rr, tune, fit, lengths):
         for it in range(8):
@@ -170,7 +171,8 @@ def main():
         print("pads needed", need)
         if need:
             fills = {s: Ft.fill(pages[z - 1]) for s, (a, z) in sp.items() if z > a}
-            cands = [dict(ws=-.45, ls=-.005), dict(ws=-.6, ls=-.008), dict(fs=.85), dict(ws=-.45, ls=-.005, fs=.85)]
+            cands = [dict(ws=-.45, ls=-.005), dict(ws=-.6, ls=-.008), dict(fs=.85), dict(ws=-.45, ls=-.005, fs=.85),
+                     dict(fs=.7), dict(ws=-.6, ls=-.008, fs=.7)]
             gain = {}
             for c in cands:
                 t2 = {k: dict(v) for k, v in tune.items()}; f2 = dict(fit)
