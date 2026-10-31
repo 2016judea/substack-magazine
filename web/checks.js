@@ -10,7 +10,7 @@
     const n = i + 1, tx = p.querySelector('.tx'), ps = pieceOf(p);
     p.querySelectorAll('img').forEach(im => { const s = im.getAttribute('src'); if (seen[s]) R.repeat_img.push([n, s + ' also p.' + seen[s]]); else seen[s] = n });
     if (p.classList.contains('blank') || (!tx && !p.classList.contains('ink')) || (tx && !tx.children.length)) R.blank.push([n, p.className]);
-    if (/[\u0001-\u0005]/.test(p.textContent)) R.ctrl.push([n, (p.textContent.match(/.{0,20}[\u0001-\u0005].{0,20}/)||[''])[0]]);
+    if (/[\u0001-\u0007]/.test(p.textContent)) R.ctrl.push([n, (p.textContent.match(/.{0,20}[\u0001-\u0005].{0,20}/)||[''])[0]]);
     if (!tx) return;
     if (tx.scrollHeight > tx.clientHeight + 1) R.overflow.push([n, tx.scrollHeight - tx.clientHeight]);
     if (p.classList.contains('contents')) return;

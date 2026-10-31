@@ -11,7 +11,7 @@ every change to it is a checked string replacement below, so the port stays audi
 Identity from editions/complete/scripts/build.py: Source Serif 4 for display and text, Source Code Pro
 for the mono, deep ink ground for the cover and the four year openers, vermilion for the one accent.
 """
-import json, os, re, shutil, subprocess, sys
+import html, json, os, re, shutil, subprocess, sys
 sys.dont_write_bytecode = True          # importing content.py must not write into editions/complete
 HERE = os.path.dirname(os.path.abspath(__file__))
 ED = os.path.join(os.path.dirname(HERE), "editions", "complete")
@@ -35,6 +35,7 @@ def inl(node):
         if c.name == "br": out.append("\x05"); continue
         if c.name == "em": out.append("\x01" + inl(c) + "\x02"); continue
         if c.name == "strong": out.append("\x03" + inl(c) + "\x04"); continue
+        if c.name == "span" and "url" in (c.get("class") or []): out.append("\x06" + c.get_text("").replace("\u200b", "") + "\x07"); continue
         out.append(inl(c))
     return "".join(out)
 
@@ -52,6 +53,14 @@ def img_block(fig, first=False):
     mw = {"plate": 707.5, "span": 707.5, "full": 707.5, "strip": 707.5, "col": 400}[kind]
     mh = {"plate": 520, "span": 520, "full": 600, "strip": 200, "col": 440}[kind]
     return {"t": "img", "src": f"img/{f}", "w": m["w"], "h": m["h"], "cap": capt, "mw": mw, "mh": mh}
+
+def linkify(h):
+    """a list item's (already escaped) HTML: each printed address becomes a link, its text unchanged"""
+    def a(m):
+        u = m.group(1).replace("<wbr>", ""); href = re.sub(r"[.,;:!?)\]”’\"']+$", "", u)
+        full = href if re.match(r"https?://", href) else "https://" + href
+        return f'<a class="url" href="{html.escape(full)}" target="_blank" rel="noopener">{href}</a>{u[len(href):]}'
+    return re.sub(r'<span class="url">(.*?)</span>', a, h)
 
 def li_html(li):
     """a list item as HTML: content.py already escaped it; nested lists stay nested"""
@@ -78,7 +87,7 @@ def blocks_for(p):
             # so a long nested item can break between its sub-items instead of moving whole
             def walk(lst, d):
                 for k, li in enumerate(lst.find_all("li", recursive=False)):
-                    own = "".join(str(c) for c in li.children if not (isinstance(c, Tag) and c.name in ("ul", "ol")))
+                    own = linkify("".join(str(c) for c in li.children if not (isinstance(c, Tag) and c.name in ("ul", "ol"))))
                     out.append({"t": "li", "v": own, "ord": lst.name == "ol", "n": k + 1, "d": d})
                     for sub_ in li.find_all(["ul", "ol"], recursive=False): walk(sub_, d + 1)
             walk(e, 0)
@@ -155,6 +164,9 @@ sub("const faces=['400 22px Newsreader','italic 400 22px Newsreader','500 22px N
 sub('<header id="bar"><span class="wm">__NAME__</span><span class="sub">No. 1 · 2023–2026</span>', '<header id="bar"><span class="wm">Aidan Jude</span><span class="sub">Periodicals · 2023–2026</span>')
 # a line break inside a paragraph (his <br>) survives the word splitter as \x05
 sub(".replace(/\\u0003([^\\u0004]*)\\u0004/g,'<b>$1</b>')}", ".replace(/\\u0003([^\\u0004]*)\\u0004/g,'<b>$1</b>').replace(/\\u0005/g,'<br>')}")
+# every address he prints (content.py's .url spans, carried as \x06…\x07) is a real link opening in a new tab;
+# the text stays exactly as printed, trailing punctuation stays outside the href
+sub(".replace(/\\u0005/g,'<br>')}", ".replace(/\\u0005/g,'<br>').replace(/\\u0006([^\\u0007]*)\\u0007/g,(m,u)=>{const h=u.replace(/[.,;:!?)\\]\u201d\u2019\\x22']+$/,'');const full=/^https?:\\/\\//.test(h)?h:'https://'+h;return `<a class=\"url\" href=\"${full.replace(/&amp;/g,'&').replace(/&/g,'&amp;').replace(/\\x22/g,'%22')}\" target=\"_blank\" rel=\"noopener\">${h}</a>`+u.slice(h.length)})}")
 # a paragraph split across pages can cut an italic or bold run in two: each half closes or reopens its own run
 sub("function H(s){return esc(s)", "function bal(s,o,c){let d=0,pre='';for(const ch of s){if(ch===o)d++;else if(ch===c){if(d)d--;else pre+=o}}return pre+s+c.repeat(d)}\nfunction H(s){s=bal(bal(String(s),'\\u0001','\\u0002'),'\\u0003','\\u0004');return esc(s)")
 # front cover: his name and the run, nothing else, on the ink ground
@@ -163,7 +175,7 @@ sub("""function coverPage(){const p=newPage('cover');
 <div class="fc-line">${J.coverLine}</div>
 <div class="fc-eq"><small>${esc(J.count)} essays</small></div>`)}""",
     """function coverPage(){const p=newPage('cover ink');
-  p.insertAdjacentHTML('afterbegin',`<div class="cv-sub">Periodicals · ${esc(J.span)}</div><div class="cv-name">Aidan<br>Jude</div><div class="cv-ft">Fifty-one pieces</div>`)}""")
+  p.insertAdjacentHTML('afterbegin',`<div class="cv-sub">Periodicals · ${esc(J.span)}</div><div class="cv-name">Aidan<br>Jude</div>`)}""")
 sub("""function backPage(){const p=newPage('back');const a=J.backPlate;""",
     """function backPage(){const p=newPage('back ink');p.insertAdjacentHTML('afterbegin',`<div class="bc"><div class="ft"><span>Aidan Jude</span><span>aidanjude.substack.com</span></div></div>`);return;const a=J.backPlate;""")
 # a year opens on the ink ground: the year, nothing else (the print book's divider)
@@ -200,7 +212,7 @@ sub("    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}", "    e
 # (a picture under a head can be set down to 45% to stay with it, so the head asks only that much room; two lines of
 # text under a head already keep it company, so a picture after them does not drag the head overleaf)
 # a head left at the foot of a page goes over with the text it heads (a department head, a piece title, a sub-head)
-sub("    freshPage(f.slug)}}\n", "    nextPage(f.slug)}}\nfunction nextPage(slug){const carry=[];while(fl&&fl.lastElementChild&&fl.lastElementChild.matches('h3,h4,h5.dept')&&fl.children.length>1)carry.unshift(fl.removeChild(fl.lastElementChild));freshPage(slug);carry.forEach(n=>fl.appendChild(n))}\n")
+sub("    freshPage(f.slug)}}\n", "    nextPage(f.slug)}}\nfunction nextPage(slug){const carry=[];{const lc=fl&&fl.lastElementChild,pv=lc&&lc.previousElementSibling;if(lc&&lc.tagName==='P'&&!lc.dataset.split&&lc.offsetHeight<1.5*LINE&&pv&&pv.matches('h3,h4,h5.dept')&&fl.children.length>2)carry.unshift(fl.removeChild(lc))}while(fl&&fl.lastElementChild&&fl.lastElementChild.matches('h3,h4,h5.dept')&&fl.children.length>1)carry.unshift(fl.removeChild(fl.lastElementChild));freshPage(slug);carry.forEach(n=>fl.appendChild(n))}\n")
 sub("    freshPage(f.slug);if(!place(node)){fl.appendChild(node)}", "    nextPage(f.slug);if(!place(node)){fl.appendChild(node)}")
 sub("fl.removeChild(node);freshPage(f.slug);place(node)", "fl.removeChild(node);nextPage(f.slug);place(node)")
 # a picture that will not fit the room left (even at 45% of its size) lets the text after it fill the page,
@@ -268,6 +280,7 @@ body{font-optical-sizing:auto}
 .tx :is(ul,ol)+:is(ul,ol){margin-top:-12px}
 .tx .lp{display:block}
 .tx .url{overflow-wrap:anywhere}
+.tx a.url{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;text-decoration-color:var(--g)}
 .fig figcaption{white-space:pre-line;font-size:14px;line-height:1.45}
 .page.contents .toc-list{gap:3px;font-size:19px;line-height:1.25}
 .page.contents .toc-list h5{font:300 34px/1 var(--disp);letter-spacing:-.01em;text-transform:none;margin:16px 0 6px;padding-top:12px;border-top:1px solid var(--k)}
