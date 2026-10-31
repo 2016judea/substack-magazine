@@ -13,4 +13,10 @@ spreads on a desktop, one page at a time on a phone, a Contents menu, arrows, sw
 - `qa.py` drives the built reader in Chromium at 390x844 and 1440x900: console errors, pages that overflow,
   pictures that fail, contents links, arrow and swipe turns. `python3 web/qa.py [url]`.
 
-Deploy: `cd web && npx vercel@latest deploy --prod` (Vercel project `periodicals`, analytics on, noindex).
+- `check.py` + `checks.js`: the typesetting rules over every page (heads kept with their text, no runts, no
+  one-line widows/orphans, no overflow, no repeated picture, no blank page, no hole over a third of a page while a
+  piece goes on, no list item stranded). `build.py` runs it and fails on any hit.
+- `render_pages.py` + `pairs.py`: every page to PNG at 820 px for the page-by-page look.
+
+Deploy: `cd web && npx vercel@latest deploy --prod` (CLI only: the project is not linked to git, because a git
+deploy builds the repo root) (Vercel project `periodicals`, analytics on, noindex).

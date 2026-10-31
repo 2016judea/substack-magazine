@@ -64,8 +64,9 @@ def blocks_for(p):
     for e in soup.find_all(recursive=False):
         cl = e.get("class") or []
         if e.name == "figure": out.append(img_block(e)); continue
-        if e.name == "h2": out.append({"t": "dept", "v": clean(inl(e))}); continue
-        if e.name == "h3": out.append({"t": "h3", "v": clean(inl(e))}); continue
+        # a head is set in its own face: the bold or italic run Substack wrapped round a whole head adds nothing
+        if e.name == "h2": out.append({"t": "dept", "v": re.sub("[\x01-\x04]", "", clean(inl(e)))}); continue
+        if e.name == "h3": out.append({"t": "h3", "v": re.sub("[\x03\x04]", "", clean(inl(e)))}); continue
         if e.name == "h4" or (e.name == "p" and "bold" in cl): out.append({"t": "h4", "v": clean(inl(e))}); continue
         if e.name == "p":
             b = {"t": "p", "v": clean(inl(e))}
@@ -73,8 +74,14 @@ def blocks_for(p):
             elif "riff" in cl: b["cls"] = "riff"
             out.append(b); continue
         if e.name in ("ul", "ol"):
-            for k, li in enumerate(e.find_all("li", recursive=False)):
-                out.append({"t": "li", "v": li_html(li), "ord": e.name == "ol", "n": k + 1})
+            # nested lists flatten to one item per line of his list, each keeping its depth and number,
+            # so a long nested item can break between its sub-items instead of moving whole
+            def walk(lst, d):
+                for k, li in enumerate(lst.find_all("li", recursive=False)):
+                    own = "".join(str(c) for c in li.children if not (isinstance(c, Tag) and c.name in ("ul", "ol")))
+                    out.append({"t": "li", "v": own, "ord": lst.name == "ol", "n": k + 1, "d": d})
+                    for sub_ in li.find_all(["ul", "ol"], recursive=False): walk(sub_, d + 1)
+            walk(e, 0)
             continue
         if e.name == "blockquote":
             cls = "pull" if "pull" in cl else "q"
@@ -127,7 +134,7 @@ for f in os.listdir(IMG):
 # ---------- the reader ----------
 tpl = open(f"{HERE}/reader.html").read()
 YEARS = ["2023", "2024", "2025", "2026"]
-J = dict(name="Aidan Jude", span="2023–2026", movements=[dict(num=y, title="") for y in YEARS], figs={}, refs=[], plates={}, closing=[], imgShrink=60)
+J = dict(name="Aidan Jude", span="2023–2026", movements=[dict(num=y, title="") for y in YEARS], figs={}, refs=[], plates={}, closing=[], imgShrink=45)
 
 def sub(a, b, n=1):
     global tpl
@@ -148,13 +155,15 @@ sub("const faces=['400 22px Newsreader','italic 400 22px Newsreader','500 22px N
 sub('<header id="bar"><span class="wm">__NAME__</span><span class="sub">No. 1 · 2023–2026</span>', '<header id="bar"><span class="wm">Aidan Jude</span><span class="sub">Periodicals · 2023–2026</span>')
 # a line break inside a paragraph (his <br>) survives the word splitter as \x05
 sub(".replace(/\\u0003([^\\u0004]*)\\u0004/g,'<b>$1</b>')}", ".replace(/\\u0003([^\\u0004]*)\\u0004/g,'<b>$1</b>').replace(/\\u0005/g,'<br>')}")
+# a paragraph split across pages can cut an italic or bold run in two: each half closes or reopens its own run
+sub("function H(s){return esc(s)", "function bal(s,o,c){let d=0,pre='';for(const ch of s){if(ch===o)d++;else if(ch===c){if(d)d--;else pre+=o}}return pre+s+c.repeat(d)}\nfunction H(s){s=bal(bal(String(s),'\\u0001','\\u0002'),'\\u0003','\\u0004');return esc(s)")
 # front cover: his name and the run, nothing else, on the ink ground
 sub("""function coverPage(){const p=newPage('cover');
   p.insertAdjacentHTML('afterbegin',`<div class="mast"><b>${esc(J.name)}</b><span>No. ${J.no||1} · ${esc(J.span)}</span></div>
 <div class="fc-line">${J.coverLine}</div>
 <div class="fc-eq"><small>${esc(J.count)} essays</small></div>`)}""",
     """function coverPage(){const p=newPage('cover ink');
-  p.insertAdjacentHTML('afterbegin',`<div class="cv-sub">Periodicals · ${esc(J.span)}</div><div class="cv-name">Aidan<br>Jude</div>`)}""")
+  p.insertAdjacentHTML('afterbegin',`<div class="cv-sub">Periodicals · ${esc(J.span)}</div><div class="cv-name">Aidan<br>Jude</div><div class="cv-ft">Fifty-one pieces</div>`)}""")
 sub("""function backPage(){const p=newPage('back');const a=J.backPlate;""",
     """function backPage(){const p=newPage('back ink');p.insertAdjacentHTML('afterbegin',`<div class="bc"><div class="ft"><span>Aidan Jude</span><span>aidanjude.substack.com</span></div></div>`);return;const a=J.backPlate;""")
 # a year opens on the ink ground: the year, nothing else (the print book's divider)
@@ -180,18 +189,36 @@ sub("const node=b.t==='li'?el('ul',null,`<li>${H(b.v)}</li>`):blockEl(b);", "con
 sub("""      if(!ul||ul.parentNode!==fl){ul=el('ul');if(!place(ul)){freshPage(f.slug);place(ul)}}
       const li=el('li',null,H(b.v));ul.appendChild(li);if(fits())continue;ul.removeChild(li);if(!ul.children.length)fl.removeChild(ul);
       freshPage(f.slug);ul=el('ul');fl.appendChild(ul);ul.appendChild(li);continue}""",
-    """      const mk=()=>{const u=el(b.ord?'ol':'ul');if(b.ord)u.start=b.n;return u};
-      if(!ul||ul.parentNode!==fl||(b.ord&&b.n===1)||ul.tagName!==(b.ord?'OL':'UL')){ul=mk();if(!place(ul)){freshPage(f.slug);ul=mk();place(ul)}}
+    """      const mk=()=>{const u=el(b.ord?'ol':'ul','d'+(b.d||0));if(b.ord)u.start=b.n;u.dataset.d=b.d||0;return u};
+      if(!ul||ul.parentNode!==fl||(b.ord&&b.n===1)||ul.tagName!==(b.ord?'OL':'UL')||+ul.dataset.d!==(b.d||0)){ul=mk();if(!place(ul)){nextPage(f.slug);ul=mk();place(ul)}}
       const li=el('li',null,b.v);ul.appendChild(li);if(fits())continue;ul.removeChild(li);if(!ul.children.length)fl.removeChild(ul);
-      freshPage(f.slug);ul=mk();fl.appendChild(ul);ul.appendChild(li);continue}""")
+      const carry=[];{const isOne=e=>e&&/^(UL|OL)$/.test(e.tagName)&&e.children.length===1&&e.offsetHeight<LINE*1.5;const lc=fl.lastElementChild;if(isOne(lc)&&fl.children.length>1&&!/^(UL|OL)$/.test(lc.previousElementSibling.tagName)){carry.push(lc);fl.removeChild(lc)}}
+      const same=carry.includes(ul);nextPage(f.slug);carry.forEach(c=>fl.appendChild(c));if(!same){ul=mk();fl.appendChild(ul)}ul.appendChild(li);continue}""")
+# (one line of a list left alone at the foot of a page goes over with the rest of it)
 # a run of heads (department, then piece title) keeps with the text under the last of them
-sub("    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}", "    else if(b.t==='h3'||b.t==='h4'||b.t==='dept'){need+=(j>i?GAP:0)+h}\n    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}")
+sub("    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}", "    else if(b.t==='h3'||b.t==='h4'||b.t==='dept'){need+=(j>i?GAP:0)+h}\n    else if(lines>=2*LINE-2)break\n    else if(b.t==='img'){need+=(j>i?GAP:0)+h*0.45;if(!blocks[j+1]||blocks[j+1].t==='img')break}\n    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}")
+# (a picture under a head can be set down to 45% to stay with it, so the head asks only that much room; two lines of
+# text under a head already keep it company, so a picture after them does not drag the head overleaf)
 # a head left at the foot of a page goes over with the text it heads (a department head, a piece title, a sub-head)
 sub("    freshPage(f.slug)}}\n", "    nextPage(f.slug)}}\nfunction nextPage(slug){const carry=[];while(fl&&fl.lastElementChild&&fl.lastElementChild.matches('h3,h4,h5.dept')&&fl.children.length>1)carry.unshift(fl.removeChild(fl.lastElementChild));freshPage(slug);carry.forEach(n=>fl.appendChild(n))}\n")
 sub("    freshPage(f.slug);if(!place(node)){fl.appendChild(node)}", "    nextPage(f.slug);if(!place(node)){fl.appendChild(node)}")
 sub("fl.removeChild(node);freshPage(f.slug);place(node)", "fl.removeChild(node);nextPage(f.slug);place(node)")
+# a picture that will not fit the room left (even at 45% of its size) lets the text after it fill the page,
+# and opens the next page instead: a layout that absorbs a gap beats a hole (aetas-nova-issue rule 9). Never when his
+# line before it ends in a colon: that line introduces the picture, which must follow it directly
+sub("if(OPT.capOrd===ORD)fl.style.bottom=(48.24+OPT.capBy)+'px'}", "if(OPT.capOrd===ORD)fl.style.bottom=(48.24+OPT.capBy)+'px';if(DEFER){const d=DEFER;DEFER=null;fl.appendChild(d)}}\nlet DEFER=null;")
+sub("  ORD=0;PENDING=[];if(fl&&OPT.tight)", "  ORD=0;PENDING=[];DEFER=null;if(fl&&OPT.tight)")
+sub("  for(let bi=hasLede?1:0;bi<f.blocks.length;bi++){const b=f.blocks[bi];", "  for(let bi=hasLede?1:0;bi<f.blocks.length;bi++){const b=f.blocks[bi];if(DEFER&&b.t!=='p'&&b.t!=='li')nextPage(f.slug);")
+sub("    nextPage(f.slug);if(!place(node)){fl.appendChild(node)}", "    if(b.t==='img'&&!DEFER&&room()>START_ROOM*0.6&&!(f.blocks[bi-1]&&/[:：]\\s*$/.test(f.blocks[bi-1].v||''))&&f.blocks[bi+1]&&(f.blocks[bi+1].t==='p'||f.blocks[bi+1].t==='li')){DEFER=node;continue}\n    if(b.t==='img'&&f.blocks[bi-1]&&/[:：]\\s*$/.test(f.blocks[bi-1].v||'')){const lc=fl.lastElementChild;if(lc&&lc.tagName==='P'&&!lc.dataset.split&&fl.children.length>1){if(lc.offsetHeight>4.5*LINE){const pb=f.blocks[bi-1],w=pb.v.split(/\\s+/),cls=lc.className;let n=w.length-1;const ln=t=>{const q=el('p',cls||null,H(t));fl.appendChild(q);const h=q.offsetHeight;fl.removeChild(q);return Math.round(h/LINE)};while(n>1&&ln(w.slice(n).join(' '))<2)n--;lc.innerHTML=H(w.slice(0,n).join(' '));lc.dataset.split='a';const tl=el('p',cls||null,H(w.slice(n).join(' ')));tl.dataset.split='b';freshPage(f.slug);fl.appendChild(tl)}else{fl.removeChild(lc);nextPage(f.slug);fl.appendChild(lc)}if(!place(node))fl.appendChild(node);continue}}\n    nextPage(f.slug);if(!place(node)){fl.appendChild(node)}")
+sub("  if(PENDING.length){flushFigures(f.slug);fl=null}", "  if(DEFER)nextPage(f.slug);\n  if(PENDING.length){flushFigures(f.slug);fl=null}")
 # a head of any rank keeps with what follows it
 sub("if(b.t==='h3'&&bi<f.blocks.length-1){", "if((b.t==='h3'||b.t==='h4'||b.t==='dept')&&bi<f.blocks.length-1){")
+# a head never asks for more than 60% of a page below it
+sub("  return GAP+need}", "  return Math.min(GAP+need,fl.clientHeight*0.6)}")
+# a head over a picture stays when a third of the page is left: the picture is set smaller, or the text fills under the head
+# a head that would be pushed overleaf by the picture above it: set that picture smaller (to 45%) so the head stays
+sub("if(room()<needFor(f.blocks,bi+1)){fl.removeChild(node);nextPage(f.slug);place(node)}", "if(room()<needFor(f.blocks,bi+1))shrinkAbove(node,needFor(f.blocks,bi+1));if(room()<needFor(f.blocks,bi+1)&&!(room()>fl.clientHeight*0.3&&f.blocks[bi+1].t==='img')){fl.removeChild(node);nextPage(f.slug);place(node)}")
+sub("function nextPage(slug){", "function shrinkAbove(node,need){const pr=node.previousElementSibling;const im=pr&&pr.matches('figure.fig')&&pr.querySelector('img');if(!im)return;const w0=parseFloat(im.style.width),h0=parseFloat(im.style.height);for(let k=95;k>=45;k-=5){im.style.width=(w0*k/100)+'px';im.style.height=(h0*k/100)+'px';if(room()>=need)return}im.style.width=w0+'px';im.style.height=h0+'px'}\nfunction nextPage(slug){")
 # pictures load when their page is shown, not all 157 at once
 sub("else if(spec.kind==='img'){const i=el('img');i.src=spec.src;", "else if(spec.kind==='img'){const i=el('img');i.loading='lazy';i.decoding='async';i.src=spec.src;")
 # his subtitle stands under the title, in the opener
@@ -209,8 +236,10 @@ CSS = """
 /* ---------- Periodicals: the print edition's face and colours on Credo's page ---------- */
 body{font-optical-sizing:auto}
 .page.ink{background:var(--ground);color:var(--paper)}
-.cv-sub{position:absolute;left:48.24px;right:48.24px;top:40.2px;padding-bottom:18px;border-bottom:1px solid var(--accd);font:500 16.88px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--accd)}
-.cv-name{position:absolute;left:44px;right:48.24px;bottom:60px;font:300 196px/.86 var(--disp);letter-spacing:-.03em;color:var(--paper)}
+/* cover: direction A "Night", approved 2026-10-30 (scratchpad/periodicals-covers.html .a), ported at 1cqw = 8.04px */
+.cv-sub{position:absolute;left:56.28px;right:56.28px;top:48.24px;margin:0;padding-bottom:19.3px;border-bottom:2.01px solid #f0704a;font:500 20.9px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#f0704a}
+.cv-name{position:absolute;left:51.46px;bottom:112.56px;font:300 168.84px/.86 var(--disp);letter-spacing:-.02em;color:#f3efe6}
+.cv-ft{position:absolute;left:56.28px;bottom:48.24px;font:500 19.3px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#9aa3b5}
 .page.mov .yr-rule{position:absolute;left:48.24px;right:48.24px;top:40.2px;border-top:1px solid var(--accd)}
 .page.mov .yr{position:absolute;left:38px;bottom:20px;font:300 300px/1 var(--disp);letter-spacing:-.035em;color:var(--paper)}
 .page.back .bc{inset:auto 48.24px 40.2px}
@@ -234,6 +263,9 @@ body{font-optical-sizing:auto}
 .tx .brk{height:16px;display:flex;align-items:center;justify-content:center}.tx .brk::before{content:"";width:40px;border-top:1px solid var(--g)}
 .tx ol{padding-left:1.4em;font:400 22.11px/1.5 var(--body)}.tx ol li+li{margin-top:5px}
 .tx li ul,.tx li ol{margin:4px 0;padding-left:1.2em}
+.tx ul.d1,.tx ol.d1{padding-left:2.3em}.tx ul.d2,.tx ol.d2{padding-left:3.5em}.tx ul.d3,.tx ol.d3{padding-left:4.7em}
+.tx ul.d1{list-style-type:circle}.tx ul.d2,.tx ul.d3{list-style-type:square}
+.tx :is(ul,ol)+:is(ul,ol){margin-top:-12px}
 .tx .lp{display:block}
 .tx .url{overflow-wrap:anywhere}
 .fig figcaption{white-space:pre-line;font-size:14px;line-height:1.45}
@@ -248,3 +280,8 @@ open(f"{PUB}/index.html", "w").write(out)
 words = sum(len(b.get("v", "").split()) for f in PIECES for b in f["blocks"] if b["t"] != "img")
 mb = sum(os.path.getsize(f"{IMG}/{f}") for f in keep) / 1e6
 print(f"{len(PIECES)} pieces, {words} words, {len(USED)} pictures ({mb:.1f} MB) -> {PUB}/index.html")
+
+# the typesetting rules, over every page (web/check.py): a broken rule fails the build
+if "--no-check" not in sys.argv:
+    rc = subprocess.run([sys.executable, f"{HERE}/check.py"]).returncode
+    if rc: sys.exit("check.py failed: see the pages listed above")
