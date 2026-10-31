@@ -80,20 +80,18 @@ section{{position:relative;width:{PW}pt;height:{PH}pt;break-after:page;overflow:
 .rh{{position:absolute;font:8.2pt/1 SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.16em;color:{Bd.MUTE};white-space:nowrap}}
 </style></head><body>{"".join(secs)}</body></html>"""
 
-NUMWORD = {51: "Fifty-one"}
 
 def cover_front(press, n_pieces, ox):
     """Cover A, "Night", approved by Aidan 2026-10-30 (artifact 90b2e31e, periodicals-covers.html),
     ported verbatim: the prototype sizes in cqw (1% of the trim width). Mono line + rule at the top
-    in vermilion, the name stacked large at the foot, the count alone beneath it (Credo's foot).
+    in vermilion, the name stacked large at the foot; no count.
     Type and colour only, no image. ox = where the trim's left edge sits inside the panel."""
     b = BL if press else 0; q = W / 100
     L = ox + 7 * q; R = W - 14 * q
-    cnt = f"{NUMWORD.get(n_pieces, n_pieces)} pieces"
     return (f'<div class="top" style="left:{L:.2f}pt;width:{R:.2f}pt;top:{b + 6 * q:.2f}pt;font-size:{2.6 * q:.2f}pt;'
             f'border-bottom:{.25 * q:.2f}pt solid {Bd.ACCD};padding-bottom:{2.4 * q:.2f}pt">Periodicals · 2023–2026</div>'
-            f'<div class="name" style="left:{ox + 6.4 * q:.2f}pt;bottom:{b + 14 * q:.2f}pt;font-size:{21 * q:.2f}pt">Aidan<br>Jude</div>'
-            f'<div class="ft" style="left:{L:.2f}pt;bottom:{b + 6 * q:.2f}pt;font-size:{2.4 * q:.2f}pt">{cnt}</div>')
+            f'<div class="name" style="left:{ox + 6.4 * q:.2f}pt;bottom:{b + 14 * q:.2f}pt;font-size:{21 * q:.2f}pt">Aidan<br>Jude</div>')
+    # the count foot was dropped from the front (Aidan, 2026-10-30: "drop this from the front cover")
 
 COVER_CSS = """
 .cv{{position:absolute;top:0;height:{PH}pt;background:{G};color:#f3efe6;overflow:hidden}}
@@ -119,7 +117,12 @@ def cover_doc(press, n_pieces, spine_pt=None, single=None):
     else:
         PW = 2 * W + spine_pt + 2 * b
         st = '<div class="st">Aidan Jude<em>2023–2026</em></div>' if spine_pt >= 18 else ""   # app.js: >= 0.25 in
-        body = (f'<div class="cv" style="left:0;width:{b + W}pt"></div>'
+        q = W / 100       # the back's one line sits where the front's mono foot would (cover A, in cqw)
+        back = (f'<div class="ft" style="left:{b + 7 * q:.2f}pt;bottom:{b + 6 * q:.2f}pt;font-size:{2.4 * q:.2f}pt">'
+                f'Saint Paul, Minnesota</div>'      # Aidan, 2026-10-30
+                f'<div class="ft" style="right:{7 * q:.2f}pt;bottom:{b + 6 * q:.2f}pt;font-size:{2.4 * q:.2f}pt">'
+                f'aidanjude.substack.com</div>')    # "i want the substack url on the back cover too!"
+        body = (f'<div class="cv" style="left:0;width:{b + W}pt">{back}</div>'
                 f'<div class="cv" style="left:{b + W}pt;width:{spine_pt}pt">{st}</div>'
                 f'<div class="cv" style="left:{b + W + spine_pt}pt;width:{W + b}pt">{cover_front(press, n_pieces, 0)}</div>')
     return (f'<!doctype html><html><head><meta charset="utf-8"><style>{ff}@page{{size:{PW}pt {PH}pt;margin:0}}body{{margin:0}}'

@@ -72,8 +72,43 @@ def inline(node):
         elif c.name in ("em", "i"): out.append(f"<em>{inline(c)}</em>")
         elif c.name in ("strong", "b"): out.append(f"<strong>{inline(c)}</strong>")
         elif c.name == "br": out.append("<br>")
+        elif c.name == "a" and shows_url(c):
+            h = RESOLVED.get(c["href"], c["href"])
+            u = re.sub(r"[#?].*$", "", re.sub(r"^https?://(www\.)?", "", h)).rstrip("/")
+            lab = inline(c)
+            # "[LINK]" becomes the address itself; a title keeps its words, the address after them
+            out.append(f'<span class="url">{esc(u)}</span>' if lab.strip().upper() == "LINK" else f'{lab} <span class="url">{esc(u)}</span>')
         else: out.append(inline(c))
     return "".join(out)
+
+# A link whose words point somewhere ("here", "Article Link", a reading list of titles) leads to
+# nothing on paper, so its address prints after it (Aidan, 2026-10-30: "page 274 needs urls! leads
+# to nothing as it stands"). A name linked mid-sentence (an artist, a Wikipedia term) reads fine
+# without one and stays as he wrote it.
+# a newsletter's click-tracker resolved to the page it lands on (curl -IL, 2026-10-30)
+RESOLVED = {"https://ben-evans.us6.list-manage.com/track/click?u=b98e2de85f03865f1d38de74f&id=30abb71520&e=0ddb081094":
+            "https://www.aboutamazon.com/news/retail/amazon-shopping-app-buy-for-me-brands"}
+POINTER = re.compile(r"^(here|link|article( link)?|full (story|article|interview|report)|source|read (it|more)|this|podcast( link)?|website|the report)$", re.I)
+def shows_url(a):
+    h = a.get("href", "")
+    if not h.startswith("http") or a.find("img") or URL.fullmatch(a.get_text("").strip()): return False
+    if "substack.com/subscribe" in h or "substack.com/app" in h: return False
+    # art never gets an address, only outside reading does (Aidan, 2026-10-30): photographers'
+    # pages, and a credit line under a picture ("Shot By: …", "Reference: NASA")
+    if re.search(r"lomography\.com|instagram\.com|flickr\.com|artsy\.net", h): return False
+    prev = a.previous_sibling
+    if isinstance(prev, str) and re.search(r"(shot by|reference|credit|via|photo|image)\s*:?\s*$", prev, re.I): return False
+    t = re.sub(r"\s+", " ", a.get_text(" ")).strip()
+    if not t: return False
+    if POINTER.match(t.strip(".:!—- ")): return True
+    prev = a.previous_sibling
+    if isinstance(prev, str) and re.search(r"(→|->|:)\s*$", prev): return True     # "the whole poem → Poetry Foundation: …"
+    blk = a.find_parent(["p", "li"])
+    if blk is None or blk.find_parent("figcaption"): return False
+    own = re.sub(r"\s+", " ", "".join(x if isinstance(x, str) else x.get_text(" ") for x in blk.contents if getattr(x, "name", None) not in ("ul", "ol"))).strip()
+    rest = own.replace(t, "", 1)
+    rest = re.sub(r"\[?link\]?|by\b.*|[\s\-–—:→>.,()\[\]]", "", rest, flags=re.I)
+    return rest == ""
 
 def text(el): return el.get_text(" ", strip=True)
 

@@ -106,7 +106,12 @@ for c in foreign:
     if h: hits += h; hit_posts.append((c["url"].split("/")[2], c["title"][:30], h))
 print(f"foreign text: {len(foreign)} randomaidan/visionboards posts checked, {hits} shared 8-word runs {hit_posts[:5]}")
 if hits: bad.append(f"text shared with other newsletters: {hit_posts[:5]}")
-if any(("randomaidan" in t or "visionboard" in t.lower()) for t in texts): bad.append("a page names randomaidan / visionboards")
+# his reading list (Oct 26) links to his own posts there; the address may print, his other writing may not
+def _foreign(t):
+    # pdfplumber interleaves two columns, so a wrapped address arrives in pieces: count its head only
+    t = re.sub(r"randomaidan\.(s(u(b(s(t(a(c(k)?)?)?)?)?)?)?)?", "", re.sub(r"\s", "", t))
+    return "randomaidan" in t or "visionboard" in t.lower()
+if any(_foreign(t) for t in texts): bad.append("a page names randomaidan / visionboards")
 
 # verbatim: every word of every post (minus web furniture) is in the book
 src = Counter()
@@ -116,6 +121,8 @@ for s in C.SLUGS:
         for lab in el.find_all("label"): lab.decompose()
         t = el.get_text(" ")
         for k, v in C.EMOJI.items(): t = t.replace(k, v)      # shortcodes print as the emoji he typed
+        for a in el.find_all("a"):                           # "[LINK]" prints as its address (content.shows_url)
+            if C.shows_url(a) and a.get_text("").strip().upper() == "LINK": t = t.replace(a.get_text(" "), " ", 1)
         src.update(re.findall(r"[A-Za-z0-9]+", t))
     src.update(re.findall(r"[A-Za-z0-9]+", p.title)); src.update(re.findall(r"[A-Za-z0-9]+", p.sub))
 full = " ".join(reading).lower()
