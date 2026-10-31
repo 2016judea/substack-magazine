@@ -177,7 +177,7 @@ sub("""function coverPage(){const p=newPage('cover');
     """function coverPage(){const p=newPage('cover ink');
   p.insertAdjacentHTML('afterbegin',`<div class="cv-sub">Periodicals · ${esc(J.span)}</div><div class="cv-name">Aidan<br>Jude</div>`)}""")
 sub("""function backPage(){const p=newPage('back');const a=J.backPlate;""",
-    """function backPage(){const p=newPage('back ink');p.insertAdjacentHTML('afterbegin',`<div class="bc"><div class="ft"><span>Aidan Jude</span><span>aidanjude.substack.com</span></div></div>`);return;const a=J.backPlate;""")
+    """function backPage(){const p=newPage('back ink');p.insertAdjacentHTML('afterbegin',`<div class="bc"><div class="ft"><span>Aidan Jude</span><span>Saint Paul, Minnesota</span></div></div>`);return;const a=J.backPlate;""")
 # a year opens on the ink ground: the year, nothing else (the print book's divider)
 sub("""function movementPage(m){const p=newPage('mov');p.dataset.piece='movement:'+m.num;
   const t=el('div','tx');t.innerHTML=`<div class="num-r">${esc(m.num)}</div><h2>${esc(m.title)}</h2>`;p.appendChild(t);t.appendChild(figure(m.fig));return p}""",
