@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>__NAME__ No. 1</title>
+<meta name="description" content="__DESC__">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)}</script><script defer src="/_vercel/insights/script.js"></script>
+<style>
+/* Direction D · Ratio, approved 2026-10-29 (scratchpad/magazine-redesign.html, section .D). Ported verbatim:
+   the prototype sizes its pages in cqw (1cqw = 1% of page width); a page here is 804 css px wide, so 1cqw = 8.04px. */
+:root{--p:#ffffff;--k:#0e0e0e;--r:#d8321e;--g:#8a8a86;--l:#e4e4e0;--disp:"DM Serif Display",serif;--body:"Newsreader",Georgia,serif;--mono:"JetBrains Mono",monospace;
+ --PW:804px;--PH:1044px;--bar:52px;--night:#111111}
+html,body{height:100%;margin:0;background:var(--night);color:#f2f2ef;font-family:var(--body);overflow:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+/* ---------- reader chrome (outside the pages) ---------- */
+#bar{position:fixed;top:0;left:0;right:0;height:var(--bar);padding-top:env(safe-area-inset-top,0px);display:flex;align-items:center;gap:1rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-family:var(--mono);font-size:12px;letter-spacing:.04em;z-index:20;background:linear-gradient(var(--night) 70%,transparent)}
+#bar .wm{font:400 24px var(--disp);color:#fff;white-space:nowrap}
+#bar .sub{color:#8a8a86;font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bar .sp{flex:1}
+#bar .pg{color:#b9b9b4;font-variant-numeric:tabular-nums;white-space:nowrap}
+#bar button{padding:.35rem .6rem;border:1px solid #333;border-radius:4px;color:#e0e0dc;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+#view{position:fixed;inset:0;top:var(--bar);display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:pan-y}
+#spread{position:relative;transform-origin:top left;display:flex;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#spread .page{flex:none}
+.nav{position:fixed;top:50%;transform:translateY(-50%);width:56px;height:96px;display:flex;align-items:center;justify-content:center;color:#fff;opacity:.55;z-index:15;font-size:30px}
+.nav:hover{opacity:1}.nav.prev{left:max(4px,env(safe-area-inset-left,0px))}.nav.next{right:max(4px,env(safe-area-inset-right,0px))}.nav[disabled]{opacity:.12;cursor:default}
+#toc{position:fixed;top:calc(var(--bar) + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:min(360px,calc(100vw - 24px));max-height:calc(100vh - var(--bar) - 24px);overflow:auto;background:#1a1a1a;border:1px solid #333;border-radius:6px;padding:14px 16px;z-index:30;font-family:var(--mono);font-size:12px;line-height:1.5;box-sizing:border-box}
+#toc h5{margin:.6rem 0 .2rem;font:500 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8a8a86}
+#toc a{display:flex;gap:.6rem;color:#f2f2ef;text-decoration:none;padding:.15rem 0}
+#toc a b{font-weight:400;color:#8a8a86;min-width:2ch;text-align:right;font-variant-numeric:tabular-nums}
+#toc a i{font:400 15px var(--body);font-style:normal}
+#store{position:absolute;left:-30000px;top:0;width:var(--PW)}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#8a8a86;z-index:40;background:var(--night)}
+#view.zoomed{display:block;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain}
+@media (max-width:560px){#bar .sub{display:none}}
+@media (max-width:899px){#bar{gap:.7rem}.nav{top:auto;bottom:max(10px,env(safe-area-inset-bottom,0px));transform:none;width:44px;height:44px;border-radius:50%;background:rgba(17,17,17,.82);border:1px solid #333;font-size:24px;opacity:.9}.nav.prev{left:max(10px,env(safe-area-inset-left,0px))}.nav.next{right:max(10px,env(safe-area-inset-right,0px))}}
+svg text{font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+/* ---------- the page (.D .pg) ---------- */
+.page{width:var(--PW);height:var(--PH);background:var(--p);color:var(--k);position:relative;overflow:hidden;box-sizing:border-box}
+/* front cover */
+.mast{position:absolute;left:48.24px;right:48.24px;top:40.2px;display:flex;justify-content:space-between;align-items:baseline;font:500 16.88px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g)}
+.mast b{color:var(--k);font:400 92px/.9 var(--disp);letter-spacing:-.01em;text-transform:none}
+.page.cover .mast span{text-align:right;line-height:1.6}
+.page.cover .mast{border-bottom:1px solid var(--k);padding-bottom:18px}
+.fc-line{position:absolute;left:48.24px;right:48.24px;bottom:150px;font:400 100px/.92 var(--disp);letter-spacing:-.015em;text-wrap:balance}
+.fc-eq small i{font-style:italic;color:var(--k)}
+.fc-line i{color:var(--r)}
+.fc-eq{position:absolute;left:48.24px;right:48.24px;bottom:56.28px;border-top:1px solid var(--k);padding-top:24.12px;display:flex;justify-content:flex-end;align-items:baseline;font:400 24.12px var(--mono)}
+.fc-eq .lt{color:var(--r);font-weight:700;letter-spacing:-.06em}
+.fc-eq small{font:400 16.88px var(--mono);color:var(--g);letter-spacing:.1em;text-transform:uppercase}
+/* back cover: the References page */
+.bc{position:absolute;inset:48.24px;display:flex;flex-direction:column}
+.page.back img.bleed,.page.plate img.bleed{position:absolute;left:0;top:0;width:100%;height:884px;object-fit:cover;display:block}
+.page.plate img.bleed{transform:scale(1.05);transform-origin:50% 50%}
+.page.plate{overflow:hidden}
+.page.back .bc,.page.plate .bc{inset:auto 48.24px 40.2px;background:var(--p)}
+.page.back .bc .ft,.page.plate .bc .ft{display:block}
+.bc .ft .row{display:flex;justify-content:space-between;gap:24px}
+.bc .ft .row.air{margin-top:14px;font-size:15.28px;letter-spacing:.06em}
+.bc .ft .row.cr{margin-top:6px;font-size:13px;color:var(--g)}
+.tx .refs{border-top:1px solid var(--k);padding-top:24.12px;margin-top:14px}
+.tx .refs h4{margin:0 0 14px;font:500 16.88px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g)}
+.tx .refs ol{margin:0;padding:0;list-style:none;font:400 19.7px/1.5 var(--body)}
+.tx .refs ol li{margin-bottom:6px;padding-left:24.12px;text-indent:-24.12px}
+.tx .refs ol i{font-style:italic}
+/* a plate inside the margins, its credit beneath in mono grey, no box */
+.fig.plate img{display:block;width:100%;max-height:none;object-fit:contain;object-position:left top}
+.bc h4{margin:0 0 19.3px;font:500 16.88px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g)}
+.bc ol{margin:0;padding:0;list-style:none;font:400 19.7px/1.5 var(--body);columns:1}
+.bc ol li{margin-bottom:9.65px;padding-left:24.12px;text-indent:-24.12px}
+.bc ol i{font-style:italic}
+.bc .ft{margin-top:auto;border-top:1px solid var(--k);padding-top:20.9px;display:flex;justify-content:space-between;font:400 17.69px var(--mono);letter-spacing:.06em}
+.bc .ft b{font-weight:700}
+/* essay opener (.op) and text page (.tx): one flow container; the opener's blocks keep their sizes wherever the essay starts */
+.tx{position:absolute;inset:48.24px;display:flex;flex-direction:column;gap:17.69px}
+.tx>*{margin:0}
+.tx.op{gap:19.3px}
+.eyebrow{font:500 16.88px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--r)}
+.tx h2{font:400 77.18px/.95 var(--disp);letter-spacing:-.015em;text-wrap:balance}
+.tx p.lede{font:400 24.92px/1.4 var(--body)}
+.tx p.lede::first-letter{font:400 72.36px/.8 var(--disp);float:left;padding:6.43px 11.26px 0 0}
+.tx .mx{margin-top:auto}
+.tx h3{font:400 43.42px/1 var(--disp)}
+.tx p{font:400 22.11px/1.5 var(--body)}
+.tx p.q{padding-left:24.12px;border-left:2px solid var(--l)}
+.tx .cite{font:400 17.69px var(--mono);color:var(--g)}
+.tx p em{font-style:italic}.tx p b{font-weight:500}
+.rh{position:absolute;left:48.24px;right:48.24px;bottom:25.73px;display:flex;justify-content:space-between;font:400 15.28px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--g)}
+/* the stag hunt, D */
+.matrix{display:grid;grid-template-columns:72.36px 1fr 1fr;grid-template-rows:40.2px 1fr 1fr;gap:1px;background:var(--k);border:1px solid var(--k);font:400 16.88px/1.3 var(--mono)}
+.matrix>div{background:var(--p);padding:14.47px}
+.matrix .h{display:flex;align-items:end;color:var(--g);text-transform:uppercase;letter-spacing:.1em;font-size:14.47px}
+.matrix .v{writing-mode:vertical-rl;transform:rotate(180deg);color:var(--g);text-transform:uppercase;letter-spacing:.1em;font-size:14.47px;display:flex;align-items:center}
+.matrix .c{display:flex;flex-direction:column;gap:4.82px;min-height:112.56px}
+.matrix .c b{font:400 33.77px/1 var(--disp);font-weight:400}
+.matrix .c.on{background:var(--k);color:var(--p)}
+.matrix .c.on b{color:var(--r)}
+.mt{display:flex;justify-content:space-between;font:400 16.08px var(--mono);color:var(--g);letter-spacing:.08em;text-transform:uppercase;margin-bottom:11.26px}
+/* figures in D's grammar: the .mt row above, the drawing, a source line in mono grey at the foot */
+.fig{display:flex;flex-direction:column}
+.fig svg{display:block;width:100%;height:auto}
+.fig .src{font:400 16.08px/1.35 var(--mono);color:var(--g);margin-top:11.26px}
+.fig .plain{font:400 16.08px/1.4 var(--mono);color:var(--g);margin:-4px 0 10px}
+.fig .legend{display:flex;flex-wrap:wrap;gap:6px 22px;font:400 14px/1.4 var(--mono);color:var(--g);margin:0 0 10px}
+.fig .legend i{display:inline-block;width:22px;height:2.2px;vertical-align:middle;margin-right:8px}
+.fig img{display:block;max-width:100%;max-height:420px;object-fit:contain;object-position:left top}
+.fig figcaption{font:400 16.08px/1.35 var(--mono);color:var(--g);margin-top:11.26px}
+/* an essay that starts below another: one rule, then the opener template */
+.tx .start{border-top:1px solid var(--k);padding-top:34px;margin-top:17px}
+.tx ul{padding-left:1.1em;font:400 22.11px/1.5 var(--body)}
+.tx ul li+li{margin-top:5px}
+.tx blockquote.own{font:italic 400 22.11px/1.5 var(--body);padding-left:24.12px;border-left:2px solid var(--l)}
+.tx .note{font:400 14px/1.5 var(--mono);color:var(--g);overflow-wrap:anywhere;white-space:pre-line}
+.tx.tight{gap:13px}
+/* movement opener: the numeral, the title, one figure, nothing else */
+.page.mov .tx{justify-content:flex-start}
+.page.mov .num-r{font:400 116.58px/.92 var(--disp);letter-spacing:-.015em;color:var(--r)}
+.page.mov h2{font:400 77.18px/.95 var(--disp);letter-spacing:-.015em}
+.page.mov .fig{margin-top:auto}
+/* contents: essay, page */
+.page.contents .toc-list{display:flex;flex-direction:column;gap:4px;font:400 19.7px/1.3 var(--body)}
+.page.contents .toc-list h5{margin:14px 0 4px;font:500 16.88px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--r)}
+.page.contents .toc-list h5:first-child{margin-top:0}
+.page.contents .toc-list a{display:flex;align-items:baseline;gap:12px;color:var(--k);text-decoration:none}
+.page.contents .toc-list a span{flex:1}
+.page.contents .toc-list a .d{flex:1;border-bottom:1px dotted var(--l);transform:translateY(-5px)}
+.page.contents .toc-list a b{font:400 17.69px var(--mono);color:var(--g);font-variant-numeric:tabular-nums}
+.page.contents .colophon{margin-top:auto;font:400 15.28px/1.5 var(--mono);color:var(--g);letter-spacing:.02em}
+</style>
+</head>
+<body>
+<div id="loading">Setting pages…</div>
+<header id="bar"><span class="wm">__NAME__</span><span class="sub">No. 1 · 2023–2026</span><span class="sp"></span><span class="pg" id="pg"></span><button id="tocbtn" aria-expanded="false" aria-controls="toc">Contents</button></header>
+<div id="toc" hidden></div>
+<button class="nav prev" id="prev" aria-label="Previous">‹</button>
+<button class="nav next" id="next" aria-label="Next">›</button>
+<main id="view"><div id="spread"></div></main>
+<div id="store" aria-hidden="true"></div>
+<script>/*__DATA__*/</script>
+<script>
+(function(){
+const PW=804,PH=1044;
+const $=s=>document.querySelector(s);
+const store=$('#store');const pages=[];const firstPage={};
+const J=window.J,ISSUE=window.ISSUE;
+function el(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function H(s){return esc(s).replace(/\u0001([^\u0002]*)\u0002/g,'<em>$1</em>').replace(/\u0003([^\u0004]*)\u0004/g,'<b>$1</b>')}
+function newPage(cls){const p=el('section','page '+(cls||''));store.appendChild(p);pages.push(p);return p}
+/* ---------- figures: one grammar. ink lines, mono labels, vermilion for the one thing the figure is about, source at the foot ---------- */
+const NS='http://www.w3.org/2000/svg',K='#0e0e0e',R='#d8321e',G='#8a8a86',LC='#e4e4e0',MONO='JetBrains Mono',DISP='DM Serif Display';
+function sv(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p&&p.appendChild(e);return e}
+function txt(p,a,s){const t=sv('text',Object.assign({'font-family':MONO},a),p);t.textContent=s;return t}
+// a line chart: series [{pts:[[x,y]..],color,label,axis:'l'|'r'}], x ticks, y axes {l:[min,max,fmt],r:[...]}, marks [{x,y,text,color,axis}]
+const FMT={k:v=>v?(v/1000)+'k':'0',pct:v=>(+v.toFixed(1))+'%',bn:v=>'$'+(+v.toFixed(0))+'bn',num:v=>Math.round(v).toLocaleString('en-US'),usd:v=>'$'+Math.round(v),m:v=>v?(+(v/1e6).toFixed(1))+'m':'0'};
+function chart(box,c){c.axes.l[2]=FMT[c.axes.l[2]]||c.axes.l[2];if(c.axes.r)c.axes.r[2]=FMT[c.axes.r[2]]||c.axes.r[2];
+  const al=c.axes.l,ar=c.axes.r,div=c.ydiv||4;const lab=(ax,i)=>ax[2](ax[0]+(ax[1]-ax[0])*i/div);
+  const wl=Math.max(...Array.from({length:div+1},(_,i)=>lab(al,i).length))*7.9+14,wr=ar?Math.max(...Array.from({length:div+1},(_,i)=>lab(ar,i).length))*7.9+14:14;
+  const W=c.W||708,H=c.H||420,L=c.L||wl,Rr=c.R||wr,T=c.T||(c.series.some(s=>s.bars)?38:24),B=36;
+  const svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':c.label},box);
+  const xs=[].concat(...c.series.map(s=>s.pts.map(p=>p[0])));const x0=c.x0??Math.min(...xs),x1=c.x1??Math.max(...xs);
+  const x=v=>L+(v-x0)/(x1-x0)*(W-L-Rr);const y=(v,ax)=>T+(1-(v-ax[0])/(ax[1]-ax[0]))*(H-T-B);
+  for(let i=0;i<=div;i++){const v=al[0]+(al[1]-al[0])*i/div;sv('line',{x1:L,x2:W-Rr,y1:y(v,al),y2:y(v,al),stroke:LC,'stroke-width':1},svg);
+    txt(svg,{x:L-8,y:y(v,al)+4,'text-anchor':'end',fill:G,'font-size':13},lab(al,i));
+    if(ar)txt(svg,{x:W-Rr+8,y:y(v,al)+4,fill:G,'font-size':13},lab(ar,i))}
+  (c.ticks||[]).forEach(t=>{const xx=x(t);const a=xx<L+12?'start':xx>W-Rr-12?'end':'middle';txt(svg,{x:a==='start'?L:a==='end'?W-Rr:xx,y:H-10,'text-anchor':a,fill:G,'font-size':13},c.tickLabels?c.tickLabels[t]:t)});
+  c.series.forEach(s=>{const ax=s.axis==='r'?ar:al;
+    if(s.bars){const bw=(W-L-Rr)/(c.nbars||s.pts.length)*0.62;s.pts.forEach(p=>sv('rect',{x:x(p[0])-bw/2,y:y(p[1],ax),width:bw,height:y(ax[0],ax)-y(p[1],ax),fill:s.color},svg));return}
+    sv('path',{d:s.pts.map((p,i)=>(i?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1],ax).toFixed(1)).join(''),fill:'none',stroke:s.color,'stroke-width':2.2,'stroke-linejoin':'round','stroke-dasharray':s.dash?'4 4':'none'},svg)});
+  // mark labels: each tries above-left, above-right, below-left, below-right, then further out, and takes the first spot
+  // whose box clears every stroked data path (sampled every 2px, stroke half-width + 2), every other label and the plot edge
+  const paths=[...svg.querySelectorAll('path')],placed=[...svg.querySelectorAll('text')].map(t=>{const b=t.getBBox();return {l:b.x,r:b.x+b.width,t:b.y,b:b.y+b.height}}),bars=[...svg.querySelectorAll('rect')].map(r=>({l:+r.getAttribute('x'),t:+r.getAttribute('y'),r:+r.getAttribute('x')+ +r.getAttribute('width'),b:+r.getAttribute('y')+ +r.getAttribute('height')}));
+  const samples=[];paths.forEach(ph=>{const Lp=ph.getTotalLength();for(let d=0;d<=Lp;d+=2){const q=ph.getPointAtLength(d);samples.push([q.x,q.y])}});
+  (c.marks||[]).forEach(m=>{const ax=m.axis==='r'?ar:al;const xx=x(m.x),yy=y(m.y,ax);if(!m.noDot)sv('circle',{cx:xx,cy:yy,r:4.5,fill:m.color||K},svg);
+    const fs=m.big?20:15;const t=txt(svg,{x:xx,y:yy,'text-anchor':'start',fill:m.color||K,'font-size':fs,'font-weight':m.big?700:500},m.text);
+    const bb=t.getBBox();const w=bb.width,h=bb.height;
+    // candidates: a grid of offsets around the point, nearest first (above-left, above-right, below-left, below-right, then further out)
+    const DX=[-10,10,-24,24,-48,48,-80,80,-120,120,-170,170,0],DY=m.below?[22,-11,40,-26,60,-44,90,-70,120]:[-11,22,-26,40,-44,60,-70,90,-100,120];
+    const cands=[];for(const dx of DX)for(const dy of DY)cands.push([dx===0?'middle':dx<0?'end':'start',dx,dy,dx*dx+dy*dy]);
+    if(m.anchor==='middle')cands.unshift(['middle',0,m.below?22:-11,0]);
+    cands.sort((a,b)=>a[3]-b[3]);
+    const hits=(bx)=>{const lw=2.2/2+2;let n=0;if(bx.l<2||bx.r>W-2||bx.t<2||bx.b>H-2)return 1e6;for(const [px,py] of samples)if(px>bx.l-lw&&px<bx.r+lw&&py>bx.t-lw&&py<bx.b+lw)n++;for(const o of placed)if(bx.l<o.r+4&&o.l<bx.r+4&&bx.t<o.b+2&&o.t<bx.b+2)n+=50;for(const o of bars)if(bx.l<o.r&&o.l<bx.r&&bx.t<o.b&&o.t<bx.b)n+=50;return n};
+    let best=null;
+    for(const [a,dx,dy] of cands){const px=xx+dx,py=yy+dy;const l=a==='end'?px-w:a==='middle'?px-w/2:px;const bx={l,r:l+w,t:py-h*0.78,b:py+h*0.22};const n=hits(bx);
+      if(n===0){best=[a,px,py,bx];break}if(!best||n<best[4])best=[a,px,py,bx,n]}
+    t.setAttribute('x',best[1]);t.setAttribute('y',best[2]);t.setAttribute('text-anchor',best[0]);placed.push(best[3])});
+  return svg}
+function figure(spec){const f=el('figure','fig');if(spec.name||spec.right)f.innerHTML=`<div class="mt"><span>${esc(spec.name)}</span><span>${esc(spec.right||'')}</span></div>`;
+  if(spec.plain)f.insertAdjacentHTML('beforeend',`<div class="plain">${esc(spec.plain)}</div>`);
+  if(spec.legend)f.insertAdjacentHTML('beforeend',`<div class="legend">${spec.legend.map(l=>`<span><i style="background:${l[1]}"></i>${esc(l[0])}</span>`).join('')}</div>`);
+  if(spec.kind==='chart'){const c=JSON.parse(JSON.stringify(spec.chart));c.tickLabels=spec.tickLabels;const det=!f.isConnected;if(det)store.appendChild(f);chart(f,c);if(det)store.removeChild(f)}
+  else if(spec.kind==='matrix')matrix(f,spec);
+  else if(spec.kind==='breakups')breakups(f,spec);
+  else if(spec.kind==='img'){const i=el('img');i.src=spec.src;i.alt='';f.appendChild(i);if(spec.cap)f.appendChild(el('figcaption',null,esc(spec.cap)))}
+  else if(spec.kind==='svg'){f.insertAdjacentHTML('beforeend',spec.svg)}   // a drawn figure the build script lays out itself (No. 2)
+  if(spec.src&&spec.kind!=='img')f.appendChild(el('div','src',esc(spec.src)));return f}
+// the stag hunt: exactly as drawn in the prototype
+function matrix(f,s){const m=el('div','matrix');const M=s.m;
+  m.innerHTML=`<div></div><div class="h">${esc(M.cols[0])}</div><div class="h">${esc(M.cols[1])}</div>`+
+   M.rows.map((r,i)=>`<div class="v">${esc(r)}</div>`+M.cells[i].map(c=>`<div class="c${c.on?' on':''}"><b>${esc(c.pay)}</b><span>${esc(c.note)}</span></div>`).join('')).join('');
+  if(s.H){const c=(s.H-40.2-2)/2;m.style.gridTemplateRows=`40.2px ${c}px ${c}px`}
+  f.appendChild(m)}
+// the three breakups: a year, the company, the descendants he names; the settlement drawn as a settlement, not a tree
+function breakups(f,s){const W=708,rows=s.rows,RH=46,H0=24+rows.reduce((a,r)=>a+Math.max(1,r.to.length)*RH+52,0);const H=Math.max(H0,s.H||0),X=(H-H0)/rows.length;const svg=sv('svg',{viewBox:`0 0 ${W} ${H}`,role:'img','aria-label':s.label},f);
+  let y=12+X/2;
+  rows.forEach((r,ri)=>{const n=Math.max(1,r.to.length);const h=n*RH;const ym=y+h/2;
+    txt(svg,{x:0,y:ym+5,fill:R,'font-size':14,'font-weight':700},r.year);
+    const t=sv('text',{x:112,y:ym+10,fill:K,'font-size':30,'font-family':DISP},svg);t.textContent=r.name;
+    if(r.to.length){sv('line',{x1:372,x2:372,y1:y+RH/2,y2:y+h-RH/2,stroke:K,'stroke-width':1.2},svg);sv('line',{x1:344,x2:372,y1:ym,y2:ym,stroke:K,'stroke-width':1.2},svg);
+      r.to.forEach((d,i)=>{const yy=y+RH/2+i*RH;sv('line',{x1:372,x2:400,y1:yy,y2:yy,stroke:K,'stroke-width':1.2},svg);txt(svg,{x:410,y:yy+(d.via?-2:5),fill:K,'font-size':15,'font-weight':500},d.name);if(d.via)txt(svg,{x:410,y:yy+20,fill:G,'font-size':11},d.via)})}
+    else{sv('line',{x1:344,x2:400,y1:ym,y2:ym,stroke:K,'stroke-width':1.2,'stroke-dasharray':'4 4'},svg);const parts=r.note.split(': ');txt(svg,{x:410,y:ym-2,fill:K,'font-size':15,'font-weight':500},parts[0]);if(parts[1])txt(svg,{x:410,y:ym+20,fill:G,'font-size':11},parts[1])}
+    y+=h+52+X;if(ri<rows.length-1)sv('line',{x1:0,x2:W,y1:y-26-X/2,y2:y-26-X/2,stroke:LC,'stroke-width':1},svg)})}
+// a figure that takes a page of its own: it follows the page its paragraph sits on, in reading order
+let PENDING=[];
+function figurePage(spec,slug){const p=newPage();p.dataset.piece=slug;const t=el('div','tx');p.appendChild(t);
+  const probe=figure(spec);t.appendChild(probe);const extra=[...probe.children].filter(e=>!e.matches('svg,.matrix')).reduce((a,e)=>a+e.offsetHeight+GAP,0);
+  const avail=t.clientHeight-extra-4;t.removeChild(probe);
+  // a matrix keeps near-square cells and sits centred on the page rather than stretching to the foot
+  const s2=JSON.parse(JSON.stringify(spec));if(s2.kind==='chart')s2.chart.H=Math.round(avail);else if(s2.kind==='matrix'){s2.H=Math.min(Math.round(avail),680);t.style.justifyContent='center'}else s2.H=Math.round(avail);
+  const f=figure(s2);t.appendChild(f);const sv_=f.querySelector('svg');if(sv_)sv_.style.height=avail+'px';return p}
+function flushFigures(slug){while(PENDING.length)figurePage(PENDING.shift(),slug)}
+/* ---------- pages ---------- */
+function coverPage(){const p=newPage('cover');
+  p.insertAdjacentHTML('afterbegin',`<div class="mast"><b>${esc(J.name)}</b><span>No. ${J.no||1} · ${esc(J.span)}</span></div>
+<div class="fc-line">${J.coverLine}</div>
+<div class="fc-eq"><small>${esc(J.count)} essays</small></div>`)}
+function backPage(){const p=newPage('back');const a=J.backPlate;
+  p.insertAdjacentHTML('afterbegin',`<img class="bleed" src="${a.src}" alt=""><div class="bc"><div class="ft"><div class="row"><span><b>Aidan Jude</b> · aidanjude.substack.com</span><span>aidanjude.vercel.app</span></div><div class="row air"><span>Artist in residence: ${esc(J.artist||'El Lissitzky')}.</span></div><div class="row cr"><span>${esc(a.credit)}</span></div></div></div>`)}
+// the References, on the last inside page
+function refsBlock(){const d=el('div','refs');d.innerHTML=`<h4>References</h4><ol>${J.refs.map(r=>`<li>${r}</li>`).join('')}</ol>`;return d}
+function movementPage(m){const p=newPage('mov');p.dataset.piece='movement:'+m.num;
+  const t=el('div','tx');t.innerHTML=`<div class="num-r">${esc(m.num)}</div><h2>${esc(m.title)}</h2>`;p.appendChild(t);t.appendChild(figure(m.fig));return p}
+function rh(p,mov,n){p.insertAdjacentHTML('beforeend',`<div class="rh"><span>${esc(J.name)}${mov?' · '+esc(mov):''}</span><span class="num">${n}</span></div>`)}
+function blockEl(b){
+  if(b.t==='p')return el('p',b.num?'num':null,H(b.v));
+  if(b.t==='eq')return el('p','num',H(b.v));
+  if(b.t==='h3')return el('h3',null,H(b.v));
+  if(b.t==='cq')return el('p','q',H(b.v)+` <span class="cite">(${esc(b.key)})</span>`);
+  if(b.t==='bq')return el('blockquote','own',H(b.v));
+  if(b.t==='note')return el('p','note',esc(b.v));
+  if(b.t==='fig')return figure(J.figs[b.k]);
+  if(b.t==='plate'){const a=J.plates[b.k];const f=el('figure','fig plate');const i=el('img');i.src=a.src;i.alt='';const h=707.5*a.h/a.w,sc=b.max&&h>b.max?b.max/h:1;i.style.width=(707.5*sc)+'px';i.style.height=(h*sc)+'px';f.appendChild(i);f.appendChild(el('div','src',esc(a.credit)));return f}
+  if(b.t==='img'){const f=figure({kind:'img',name:'',right:'',src:b.src,cap:b.cap});const i=f.querySelector('img');const h=Math.min(420,707.5*(b.h||3)/(b.w||4));i.style.height=h+'px';i.style.width=Math.min(707.5,h*(b.w||4)/(b.h||3))+'px';return f}
+  return null}
+let page=null,fl=null,MOV='',ORD=0;
+function freshPage(slug,op){flushFigures(slug);page=newPage();page.dataset.piece=slug;fl=el('div','tx'+(op?' op':'')+(OPT.tight?' tight':''));page.appendChild(fl);ORD++;if(OPT.capOrd===ORD)fl.style.bottom=(48.24+OPT.capBy)+'px'}
+function fits(){return fl.scrollHeight<=fl.clientHeight+.5}
+function room(){if(!fl)return 0;const lc=fl.lastElementChild;return lc?fl.clientHeight-(lc.offsetTop+lc.offsetHeight):fl.clientHeight}
+function place(node){fl.appendChild(node);if(fits())return true;fl.removeChild(node);return false}
+const LINE=22.11*1.5,GAP=17.69;
+// keep-with-next: the room a heading needs below it: the first ~3 lines of what follows (a figure or quote counts whole)
+function needFor(blocks,i){if(!blocks[i])return 0;let need=0,lines=0;
+  for(let j=i;j<blocks.length&&lines<3*LINE-2;j++){const b=blocks[j];const node=b.t==='li'?el('ul',null,`<li>${H(b.v)}</li>`):blockEl(b);if(!node)continue;
+    fl.appendChild(node);const h=node.offsetHeight;fl.removeChild(node);
+    if(b.t==='p'||b.t==='li'||b.t==='cq'){const take=Math.min(h,3*LINE-lines);need+=(j>i?GAP:0)+take;lines+=take}
+    else{need+=(j>i?GAP:0)+Math.min(h,fl.clientHeight*0.9);break}}
+  return GAP+need}
+// a paragraph split across pages leaves at least two lines on each side
+function splitPara(f,b){let words=b.v.split(/\s+/),guard=0,cut=false;
+  while(words.length&&guard++<80){const p=el('p',b.lede&&guard===1?'lede':b.num?'num':null,H(words.join(' ')));if(cut)p.dataset.split='b';if(place(p))return;
+    let lo=0,hi=words.length-1,best=0;
+    while(lo<=hi){const mid=(lo+hi)>>1;p.innerHTML=H(words.slice(0,mid).join(' '));fl.appendChild(p);const ok=fits();fl.removeChild(p);if(ok){best=mid;lo=mid+1}else hi=mid-1}
+    const lines=n=>{if(n<=0)return 0;const q=el('p',null,H(words.slice(0,n).join(' ')));fl.appendChild(q);const h=q.offsetHeight;fl.removeChild(q);return Math.round(h/LINE)};
+    const rest=n=>{const q=el('p',null,H(words.slice(n).join(' ')));fl.appendChild(q);const h=q.offsetHeight;fl.removeChild(q);return Math.round(h/LINE)};
+    while(best>0&&rest(best)<2)best-=2;
+    if(best>0&&lines(best)<2)best=0;
+    if(best>0){p.innerHTML=H(words.slice(0,best).join(' '));p.dataset.split=(cut?'b ':'')+'a';fl.appendChild(p);words=words.slice(best);cut=true}
+    freshPage(f.slug)}}
+const START_ROOM=Math.round((1044-96.48)/3);   // an essay whose opener would land in the bottom third of a page starts on a fresh page
+const RUNT=0.25*(1044-96.48);   // a tail under a quarter of a page (about seven lines) is a runt
+let OPT={};
+function attempt(f,forceNew){
+  ORD=0;PENDING=[];if(fl&&OPT.tight)fl.classList.add('tight');if(fl&&OPT.capOrd===0)fl.style.bottom=(48.24+OPT.capBy)+'px';
+  if(forceNew||!fl||room()<START_ROOM)freshPage(f.slug,true);else page.dataset.piece+=' '+f.slug;
+  firstPage[f.slug]=pages.indexOf(page)+1;
+  const below=fl.children.length>0;
+  const head=el('div',below?'start':'');head.innerHTML=`<div class="eyebrow">${esc(f.eyebrow)}</div>`;
+  const h=el('h2',null,H(f.title));
+  const hasLede=f.blocks[0]&&f.blocks[0].t==='p';
+  fl.appendChild(head);fl.appendChild(h);
+  const ledeBlock=hasLede?Object.assign({},f.blocks[0],{lede:true}):null;
+  // the opener never parts from its lede: it needs the title and at least three lines of the lede on the same page
+  const moveOn=()=>{fl.removeChild(head);fl.removeChild(h);const old=page;freshPage(f.slug,true);old.dataset.piece=old.dataset.piece.replace(' '+f.slug,'');firstPage[f.slug]=pages.indexOf(page)+1;head.className='';fl.appendChild(head);fl.appendChild(h)};
+  if(!fits())moveOn();
+  else if(hasLede){const q=el('p','lede',H(f.blocks[0].v));fl.appendChild(q);const hq=q.offsetHeight;fl.removeChild(q);if(room()<GAP+Math.min(hq,3*24.92*1.4+30))moveOn()}
+  else if(room()<needFor(f.blocks,0))moveOn();
+  if(hasLede)splitPara(f,ledeBlock);
+  let ul=null;
+  for(let bi=hasLede?1:0;bi<f.blocks.length;bi++){const b=f.blocks[bi];
+    if(b.t==='li'){
+      if(!ul||ul.parentNode!==fl){ul=el('ul');if(!place(ul)){freshPage(f.slug);place(ul)}}
+      const li=el('li',null,H(b.v));ul.appendChild(li);if(fits())continue;ul.removeChild(li);if(!ul.children.length)fl.removeChild(ul);
+      freshPage(f.slug);ul=el('ul');fl.appendChild(ul);ul.appendChild(li);continue}
+    ul=null;
+    if(b.t==='p'){splitPara(f,b);continue}
+    // a full-page figure follows the page of the paragraph that introduces it; if that page is already into its bottom third, it ends there, so what follows reads after the figure
+    if(b.t==='figpage'){PENDING.push(J.figs[b.k]);if(room()<START_ROOM)freshPage(f.slug);continue}
+    const node=blockEl(b);if(!node)continue;
+    if(b.t==='h3'&&bi<f.blocks.length-1){if(place(node)){if(room()<needFor(f.blocks,bi+1)){fl.removeChild(node);freshPage(f.slug);place(node)}continue}}
+    if(OPT.shrink&&node.querySelector('svg'))node.querySelector('svg').style.width=OPT.shrink+'%';
+    if(OPT.shrink&&node.querySelector('img')){const i=node.querySelector('img');i.style.height=(parseFloat(i.style.height)*OPT.shrink/100)+'px';i.style.width=(parseFloat(i.style.width)*OPT.shrink/100)+'px'}
+    if(place(node))continue;
+    // a drawn figure that misses the foot of a page by a little is set a size smaller, so the page is not left empty
+    if((b.t==='fig'||b.t==='img'||b.t==='plate')&&room()>240){let ok=false;const hasSvg=!!node.querySelector('svg'),im=node.querySelector('img');const h0=im?parseFloat(im.style.height):0,w0=im?parseFloat(im.style.width):0;
+      for(let w=96;w>=(hasSvg?60:im?(J.imgShrink||70):84);w-=4){if(hasSvg)node.querySelector('svg').style.width=w+'%';else if(im){im.style.height=(h0*w/100)+'px';im.style.width=(w0*w/100)+'px'}else node.style.zoom=w/100;if(place(node)){ok=true;break}}
+      if(ok)continue;node.style.width='';node.style.zoom='';if(hasSvg)node.querySelector('svg').style.width='';if(im){im.style.height=h0+'px';im.style.width=w0+'px'}}
+    freshPage(f.slug);if(!place(node)){fl.appendChild(node)}
+  }
+  if(PENDING.length){flushFigures(f.slug);fl=null}
+}
+function layoutPiece(f,forceNew){
+  const snap={n:pages.length,page,fl,kids:fl?fl.children.length:0,piece:page?page.dataset.piece:null,cls:fl?fl.className:null,bottom:fl?fl.style.bottom:null};
+  const undo=()=>{PENDING=[];pages.splice(snap.n).forEach(p=>p.remove());page=snap.page;fl=snap.fl;if(fl){while(fl.children.length>snap.kids)fl.removeChild(fl.lastElementChild);fl.className=snap.cls;fl.style.bottom=snap.bottom;page.dataset.piece=snap.piece}};
+  const tail=()=>{if(!fl)return 1e9;const opened=pages.length-snap.n;const startedNew=pages[snap.n]&&firstPage[f.slug]===snap.n+1;if(opened===0||(opened===1&&startedNew))return 1e9;const lc=fl.lastElementChild;return lc?lc.offsetTop+lc.offsetHeight:0};
+  OPT={};attempt(f,forceNew);let t=tail();const t0=t,start0=firstPage[f.slug];
+  // no runt ending (Aidan, 2026-10-29). In order: the essay's own figures a size smaller; a little less space between
+  // blocks; then enough text pushed forward that the last page holds a real block
+  if(t<RUNT&&f.blocks.some(b=>b.t==='fig'||b.t==='img')){for(const sh of [90,80,70]){undo();OPT={shrink:sh};attempt(f,forceNew);t=tail();if(t>=RUNT)break}}
+  if(t<RUNT){undo();OPT={tight:true};attempt(f,forceNew);t=tail()}
+  if(t<RUNT){const ords=ORD;undo();OPT={capOrd:Math.max(0,ords-1),capBy:Math.round(RUNT-t+LINE)};attempt(f,forceNew);t=tail()}
+  // a last page under half full, when the essay carries figures: set them a size smaller if that saves the page (fills space, never leaves a near-empty page)
+  if(t<0.5*(1044-96.48)&&t>=RUNT&&f.blocks.some(b=>b.t==='fig'||b.t==='img')){const opened0=pages.length-snap.n,o0=JSON.stringify(OPT);let won=false;
+    for(const sh of [90,80,70]){undo();OPT={shrink:sh};attempt(f,forceNew);const t2=tail();if(pages.length-snap.n<opened0&&t2>=RUNT){t=t2;won=true;break}}
+    if(!won){undo();OPT=JSON.parse(o0);attempt(f,forceNew);t=tail()}}
+  (window.__log=window.__log||[]).push([f.slug,start0,Math.round(t0),Math.round(t),JSON.stringify(OPT)]);OPT={};
+}
+function build(){
+  coverPage();
+  const contents=newPage('contents');
+  let lastMov=null;
+  ISSUE.forEach(f=>{
+    const m=J.movements.find(m=>m.num===f.mov);
+    const brk=f.mov!==lastMov;
+    if(brk){movementPage(m);fl=null;firstPage['movement:'+m.num]=pages.length}
+    MOV=f.mov;layoutPiece(f,brk||!!f.fresh);lastMov=f.mov});
+  // saddle-stitch: the count divides by 4; the References page is the back cover
+  // References close the last essay's page when they fit there; otherwise they take a page of their own
+  // the References close the last essay's page when they fit there (set a touch smaller if that is what it takes); otherwise a page of their own
+  // an issue with nothing cited (No. 2) has no References page
+  if(J.refs&&J.refs.length){const rb=refsBlock();let ok=!!fl&&place(rb);if(!ok&&fl){for(let z=96;z>=84;z-=4){rb.style.zoom=z/100;if(place(rb)){ok=true;break}}if(!ok)rb.style.zoom=''}
+  if(!ok){freshPage('references');page.dataset.piece='references';fl.appendChild(rb)}
+  firstPage['references']=pages.indexOf(page)+1;
+  // a References page left more than a third empty closes on one plate from the artist in residence (Aidan, 2026-10-30: only where a gap would look like a hole)
+  if(J.closingPlate&&J.plates[J.closingPlate]&&room()>=316){const a=J.plates[J.closingPlate];const f=el('figure','fig plate');const i=el('img');i.src=a.src;i.alt='';f.appendChild(i);f.appendChild(el('div','src',esc(a.credit)));
+    fl.appendChild(f);const h=Math.max(120,room()+f.offsetHeight-f.querySelector('.src').offsetHeight-GAP-12);i.style.height=Math.min(h,707.5*a.h/a.w)+'px';i.style.width=(parseFloat(i.style.height)*a.w/a.h)+'px';i.style.marginLeft='auto';i.style.marginRight='auto';if(!fits())fl.removeChild(f)}}
+  // saddle-stitch padding: closing plates from the artist in residence first (one work each, never a repeat), blanks only if those run out
+  const closing=[...(J.closing||[])];
+  // blanks only for the press PDF (?press=1), where saddle-stitch needs a multiple of 4; the web reader never shows a blank
+  const PRESS=/[?&]press=1/.test(location.search);
+  while((pages.length+1)%4){const k=closing.shift();if(!k&&!PRESS)break;if(k&&J.plates[k]){const a=J.plates[k];const p=newPage('plate');p.dataset.piece='plate';
+      p.insertAdjacentHTML('afterbegin',`<img class="bleed" src="${a.src}" alt=""><div class="bc"><div class="ft"><div class="row cr"><span>${esc(a.credit)}</span></div></div></div>`)}
+    else{const p=newPage('blank');p.dataset.piece='blank'}}
+  // the References are the last inside page: closing plates sit before them
+  {const rp=pages.find(p=>p.dataset.piece==='references');const ri=rp?pages.indexOf(rp):-1;if(ri>=0&&ri<pages.length-1){pages.splice(ri,1);pages.push(rp)}if(rp)firstPage['references']=pages.indexOf(rp)+1}
+  backPage();
+  // Aidan, 2026-10-30: no art plate on the inside back cover (the page before the back cover) — it "detracts from the impact of the art on the back cover… its one or the other". Checked here for every issue; qa.py and press_pdf.py fail on it
+  {const ib=pages[pages.length-2];window.__insideBackArt=!!(ib&&(ib.classList.contains('plate')||ib.querySelector('.fig.plate,img.bleed')))}
+  for(const f of ISSUE){const i=pages.findIndex(p=>(p.dataset.piece||'').split(' ').includes(f.slug));firstPage[f.slug]=i+1}
+  pages.forEach((p,i)=>{const n=i+1;p.classList.add(n%2===0?'L':'R');if(p.classList.contains('cover')||p.classList.contains('back')||p.classList.contains('mov')||p.classList.contains('contents')||p.classList.contains('blank')||p.classList.contains('plate'))return;
+    const slug=(p.dataset.piece||'').split(' ')[0];const f=ISSUE.find(x=>x.slug===slug);rh(p,f?f.mov:'',n);
+    // a figure's source line sitting on the running head crowds it: keep the folio, drop the name on that page
+    const head=p.querySelector('.rh'),ht=head.getBoundingClientRect().top;
+    if([...p.querySelectorAll('.fig .src')].some(s=>s.getBoundingClientRect().bottom>ht-14))head.firstElementChild.textContent=''});
+  const secs=J.movements.map(m=>({m,items:ISSUE.filter(f=>f.mov===m.num)}));
+  contents.insertAdjacentHTML('beforeend',`<div class="tx"><div class="eyebrow">Contents</div><div class="toc-list">${secs.map(s=>`<h5>${esc(s.m.num)} · ${esc(s.m.title)}</h5>`+s.items.map(f=>`<a href="#p${firstPage[f.slug]}" data-p="${firstPage[f.slug]}"><span>${H(f.title)}</span><i class="d"></i><b>${firstPage[f.slug]}</b></a>`).join('')).join('')}</div><p class="colophon">${esc(J.name)} · No. ${J.no||1} · ${J.sub?esc(J.sub)+' · ':''}${esc(J.span)} · ${pages.length} pages · Set in DM Serif Display, Newsreader and JetBrains Mono</p></div>`);
+  $('#toc').innerHTML=`<h5>Contents</h5><a href="#p1" data-p="1"><b>1</b><span>Cover</span></a><a href="#p2" data-p="2"><b>2</b><span>Contents</span></a>`+secs.map(s=>`<h5>${esc(s.m.num)} · ${esc(s.m.title)}</h5>`+s.items.map(f=>`<a href="#p${firstPage[f.slug]}" data-p="${firstPage[f.slug]}"><b>${firstPage[f.slug]}</b><i>${esc(f.title.replace(/[\u0001-\u0004]/g,''))}</i></a>`).join('')).join('')+`<h5>&nbsp;</h5>`+(firstPage['references']?`<a href="#p${firstPage['references']}" data-p="${firstPage['references']}"><b>${firstPage['references']}</b><span>References</span></a>`:'')+`<a href="#p${pages.length}" data-p="${pages.length}"><b>${pages.length}</b><span>Back cover</span></a>`;
+  window.__pieces=pages.map(p=>p.dataset.piece||p.className);
+}
+/* ---- the reader ---- */
+const view=$('#view'),spread=$('#spread'),pg=$('#pg'),prev=$('#prev'),next=$('#next'),toc=$('#toc'),tocbtn=$('#tocbtn');
+let spreads=[],cur=0,twoUp=null,zoomed=false,fitSc=1,fitLeft=0,fitTop=0;
+function layout(){
+  const w=innerWidth;const two=w>=900;
+  if(two!==twoUp){twoUp=two;const keep=currentFirstPage();spreads=[];if(two){spreads.push([0]);for(let i=1;i<pages.length;i+=2)spreads.push(i+1<pages.length?[i,i+1]:[i]);}else{pages.forEach((_,i)=>spreads.push([i]))}cur=spreads.findIndex(s=>s.includes(keep));if(cur<0)cur=0;}
+  render();
+}
+function currentFirstPage(){return spreads[cur]?spreads[cur][0]:0}
+function render(keepScroll){
+  while(spread.firstChild)store.appendChild(spread.firstChild);
+  if(twoUp&&zoomed)zoomed=false;view.classList.toggle('zoomed',zoomed);
+  const s=spreads[cur];const W=s.length*PW;
+  s.forEach(i=>spread.appendChild(pages[i]));
+  const barH=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar'));
+  const availW=innerWidth-(twoUp?96:12),availH=innerHeight-barH-18;
+  fitSc=Math.min(availW/W,availH/PH);fitLeft=(innerWidth-W*fitSc)/2;fitTop=(availH-PH*fitSc)/2+9;
+  spread.style.width=W+'px';spread.style.height=PH+'px';spread.style.position='absolute';spread.style.left='0';
+  if(zoomed){// reading size: one column (plus its margin) fills the screen width
+    const sc=zoomSc();spread.style.transform=`scale(${sc})`;spread.style.marginLeft='0';spread.style.top='0';if(!keepScroll){view.scrollLeft=0;view.scrollTop=0}
+  }else{spread.style.transform=`scale(${fitSc})`;
+  // centre: transform-origin top-left, so offset via margins
+  spread.style.marginLeft=fitLeft+'px';spread.style.top=fitTop+'px';}
+  const nums=s.map(i=>i+1);pg.textContent=(nums.length>1?`pp. ${nums[0]}–${nums[1]}`:`p. ${nums[0]}`)+` / ${pages.length}`;
+  prev.disabled=cur===0;next.disabled=cur===spreads.length-1;
+}
+function go(n){if(n<0||n>=spreads.length)return;cur=n;render()}
+// reading size: the single 708 px measure fills the screen width
+function zoomSc(){return innerWidth/730}
+function setZoom(on,cx,cy){if(twoUp||on===zoomed)return;
+  const barH=view.getBoundingClientRect().top;
+  // keep the tapped point of the page under the finger
+  const px=(cx-fitLeft)/fitSc,py=(cy-barH-fitTop)/fitSc;zoomed=on;render(true);
+  if(on){const sc=zoomSc();view.scrollLeft=Math.round(37*sc);view.scrollTop=Math.max(0,py*sc-(cy-barH))}}
+function goPage(p){const i=spreads.findIndex(s=>s.includes(p-1));if(i>=0)go(i);toc.hidden=true;tocbtn.setAttribute('aria-expanded','false')}
+prev.onclick=()=>go(cur-1);next.onclick=()=>go(cur+1);
+addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')go(cur+1);else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);else if(e.key==='Escape'){toc.hidden=true}});
+let tx=null,ty=null,pinch=0;const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+view.addEventListener('touchstart',e=>{if(e.touches.length===2){pinch=dist(e.touches);tx=null;return}tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+view.addEventListener('touchmove',e=>{if(!pinch||e.touches.length!==2)return;const r=dist(e.touches)/pinch,mx=(e.touches[0].clientX+e.touches[1].clientX)/2,my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+  if(r>1.15&&!zoomed){setZoom(true,mx,my);pinch=0}else if(r<.87&&zoomed){setZoom(false);pinch=0}},{passive:true});
+view.addEventListener('touchend',e=>{if(e.touches.length===0)pinch=0;if(tx==null||zoomed){tx=null;return}const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy))go(cur+(dx<0?1:-1));tx=null});
+// one tap at the edges turns the page; a double tap opens it at reading size (single page only), so the turn waits a beat there
+let tapT=null;
+view.addEventListener('click',e=>{if(e.target.closest('a'))return;const x=e.clientX/innerWidth,cx=e.clientX,cy=e.clientY;
+  const turn=()=>{if(zoomed)return;if(x>0.66)go(cur+1);else if(x<0.34)go(cur-1)};
+  if(twoUp){turn();return}
+  if(tapT){clearTimeout(tapT);tapT=null;setZoom(!zoomed,cx,cy);return}
+  tapT=setTimeout(()=>{tapT=null;turn()},260)});
+tocbtn.onclick=()=>{toc.hidden=!toc.hidden;tocbtn.setAttribute('aria-expanded',String(!toc.hidden))};
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-p]');if(a){e.preventDefault();goPage(+a.dataset.p)}});
+addEventListener('resize',()=>{if(zoomed&&innerWidth<900){render(true);return}layout()});
+function start(){
+  try{if(location.hash)history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  layout();
+  $('#loading').remove();
+}
+const faces=['400 22px Newsreader','italic 400 22px Newsreader','500 22px Newsreader','400 77px "DM Serif Display"','500 16px "JetBrains Mono"','700 24px "JetBrains Mono"'];
+Promise.all(faces.map(f=>document.fonts.load(f).catch(()=>{}))).then(()=>document.fonts.ready).then(()=>{build();start()});
+})();
+</script>
+</body>
+</html>
