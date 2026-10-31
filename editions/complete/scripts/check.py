@@ -19,24 +19,26 @@ from bs4 import BeautifulSoup
 
 R = Bd.R; bad = []
 pj = json.load(open(f"{Bd.B}/press.json"))
-INT, FX, CV = pj["out"]["interior"], pj["out"]["fedex"], pj["out"]["cover"]
+INT, CV = pj["out"]["interior"], pj["out"]["cover"]
 
 def check_boxes(f, bl, w, h):
     r = PdfReader(f)
     for i, p in enumerate(r.pages):
         mb, tb, bb = [[round(float(v), 2) for v in x] for x in (p.mediabox, p.trimbox, p.bleedbox)]
-        if mb != [0, 0, w + 2 * bl, h + 2 * bl] or tb != [bl, bl, w + bl, h + bl] or bb != mb:
+        # Chromium rounds the page size by up to ~0.3 pt (the cover's computed spine); 0.5 pt = 0.007 in
+        near = lambda a, b: all(abs(x - y) <= 0.5 for x, y in zip(a, b))
+        if not near(mb, [0, 0, w + 2 * bl, h + 2 * bl]) or not near(tb, [bl, bl, w + bl, h + bl]) or bb != mb:
             bad.append(f"{os.path.basename(f)} p{i+1}: boxes media {mb} trim {tb} bleed {bb}"); break
     return len(r.pages)
 
 n = check_boxes(INT, 9, 612, 792)
 if n % 4: bad.append(f"interior: {n} pages, not a multiple of 4")
-nf = check_boxes(FX, 0, 612, 792)
+
 sw = 2 * 612 + pj["spine_in"] * 72
 check_boxes(CV, 9, sw, 792)
-print(f"interior {n} pp (multiple of 4: {n % 4 == 0}); FedEx {nf} pp; cover spread {sw/72:.3f} x 11 in trim, spine {pj['spine_in']:.2f} in")
+print(f"interior {n} pp (multiple of 4: {n % 4 == 0}); cover spread {sw/72:.3f} x 11 in trim, spine {pj['spine_in']:.2f} in")
 
-for f in (INT, FX, CV):
+for f in (INT, CV):
     rows = subprocess.run(["pdffonts", f], capture_output=True, text=True).stdout.splitlines()[2:]
     ne = [l for l in rows if l.split()[-5] != "yes"]
     names = sorted({l.split()[0].split("+")[-1] for l in rows})
@@ -112,7 +114,9 @@ for s in C.SLUGS:
     p = C.Post(s, {})
     for el in p.top:
         for lab in el.find_all("label"): lab.decompose()
-        src.update(re.findall(r"[A-Za-z0-9]+", el.get_text(" ")))
+        t = el.get_text(" ")
+        for k, v in C.EMOJI.items(): t = t.replace(k, v)      # shortcodes print as the emoji he typed
+        src.update(re.findall(r"[A-Za-z0-9]+", t))
     src.update(re.findall(r"[A-Za-z0-9]+", p.title)); src.update(re.findall(r"[A-Za-z0-9]+", p.sub))
 full = " ".join(reading).lower()
 src = Counter({k.lower(): 0 for k in src}) + Counter(k.lower() for k in src.elements())

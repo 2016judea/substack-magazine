@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Aidan Jude — Selected writing · 2023–2026. Every Periodicals post, one magazine.
+"""Aidan Jude — Periodicals · 2023–2026. Every post, one magazine.
 
 Design: one family, Source Serif 4, at the optical size each job needs (8 pt credits, 10 pt text,
 18 pt decks, 60 pt display). Text 10.25/14 pt in two 241 pt columns on a 48-line page, the same
@@ -68,7 +68,10 @@ body{{margin:0;font:10.25pt/{LEAD}pt SSText-Regular;color:{INK};font-kerning:nor
 em,i{{font-family:SSText-Italic;font-style:normal}} strong,b{{font-family:SSText-Semibold;font-weight:normal}}
 strong em,em strong{{font-family:SSText-SemiboldItalic}}
 section{{break-before:page}}
-.mk{{position:absolute;font-size:1px;line-height:1px;color:#fff;white-space:nowrap}}
+.mk{{position:absolute;font-size:5pt;line-height:0;color:#fff;white-space:nowrap}}
+/* inside a piece the marker is an in-flow block of zero height, so its text (probe) or absence
+   (press) cannot change the column balance; an absolutely placed one did, by a page (10/29-30) */
+.essay .mk{{position:static;display:block;height:0;line-height:0}}
 
 /* ---------- bleed pages: dividers ---------- */
 .bleedp{{page:bleed;position:relative;width:{PW}pt;height:{PH}pt;overflow:hidden;background:{GROUND};color:{PAPER}}}
@@ -199,11 +202,15 @@ def essay(p, fit, tune, marks):
                 body = body[:m.start()] + body[m.start():].replace(">", f' style="break-before:{kind}">', 1)
                 break
     pad = tune.get(p.slug, {}).get("body_mt", 0)
+    # the piece marker sits after the date line, inside the header: a zero-height block that is the
+    # section's first child gets a duplicate fragment at the foot of the page before (10/30)
     mk = f'<div class="mk">{"@e:" + str(p.slug) + "@" if marks else ""}</div>'
+    head = head.replace("</div>", "</div>" + mk, 1); mk = ""
     body = f'<div class="mk">{"@b:" + p.slug + "@" if marks else ""}</div>' + body
-    mke = f'<span class="mk">{"@z:" + p.slug + "@" if marks else ""}</span>'
+    # no end marker: an absolutely positioned span at the end of the column set changed Chromium's
+    # column balance between renders (10/29); a piece's span is read from the next section's start
     return (f'<section class="essay {p.mode}" id="e-{p.slug}" data-year="{p.year}">{mk}{head}'
-            f'<div class="body" style="padding-top:{pad:.1f}pt">{body}{mke}</div></section>')
+            f'<div class="body" style="padding-top:{pad:.1f}pt">{body}</div></section>')
 
 def divider(y, marks):
     mk = f'<div class="mk">{"@d:" + str(y) + "@" if marks else ""}</div>'
@@ -231,13 +238,13 @@ def document(press, plan, toc=None, tune=None, fit=None, marks=True):
     parts = []
     for it in plan:
         if it == "title":
-            parts.append(f'<section class="titlep"><div class="mk">{"@t:1@" if marks else ""}</div><div class="t1">Aidan Jude</div><div class="t2">Selected writing&nbsp;&nbsp;·&nbsp;&nbsp;2023–2026</div></section>')
+            parts.append(f'<section class="titlep"><div class="mk">{"@t:1@" if marks else ""}</div><div class="t1">Aidan Jude</div><div class="t2">Periodicals&nbsp;&nbsp;·&nbsp;&nbsp;2023–2026</div></section>')
         elif it == "contents": parts.append(contents(list(posts.values()), toc, marks))
         elif it[0] == "div": parts.append(divider(it[1], marks))
         elif it[0] == "essay": parts.append(essay(posts[it[1]], fit, tune, marks))
         elif it[0] == "line": parts.append(linepage(it[1], marks))
     figs = {f["id"]: f for p in posts.values() for f in p.figs}
-    htm = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Aidan Jude · Selected writing · 2023–2026</title>'
+    htm = (f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Aidan Jude · Periodicals · 2023–2026</title>'
            f'<style>{css(press, tune)}</style></head><body>{"".join(parts)}</body></html>')
     return htm, posts, figs
 
@@ -339,17 +346,27 @@ def main():
                     tune[s2]["coda_inline"] = True; moved = True; print("  coda inline:", s2)
             if not moved: break
             fix_holes(rr, plan, tune, fit, 2)
+        # The closing passage follows the body directly (the .coda margin, 16 pt). It is never
+        # pushed to the foot with a void above it: trailing space below the last word reads as an
+        # ending, a hole above the ending reads as an unfinished page (coordinator's read, 10/29).
+        # A single-page photo post likewise keeps its text under its picture.
+        for s in C.SLUGS: tune[s].pop("coda_mt", None); tune[s].pop("body_mt", None)
+        print("stage 5: repack short last pages")
         pages, sp, fbe, mode, posts = probe(rr, plan, tune, fit)
-        before = {s2: z - a + 1 for s2, (a, z) in sp.items()}
-        for s2, (a, z) in sp.items():
-            g = Ft.BOTY - max(i["bottom"] for i in Ft.items(pages[z - 1]))
-            has_coda = bool(C.Post(s2, fit).body_html()[1]) and not tune[s2].get("coda_inline")
-            if has_coda and g > 20: tune[s2]["coda_mt"] = round(g - 14, 1)
-            elif a == z and g > 0.12 * TH and posts[s2].mode == "one": tune[s2]["body_mt"] = round(g - 14, 1)
-        pages, sp, fbe, mode, posts = probe(rr, plan, tune, fit)
-        for s2, (a, z) in sp.items():
-            if z - a + 1 != before[s2]:
-                print("  compose grew", s2, "- reverting"); tune[s2].pop("coda_mt", None); tune[s2].pop("body_mt", None)
+        lf = Ft.last_fill(pages, sp)
+        for s2 in [k for k, v in lf.items() if v[0] > 1 and (v[1] < 0.5 or mode[k] == "one")]:
+            base = dict(tune.get(s2, {})); basef = dict(fit); done = False
+            for c in ([dict(fs=.9), dict(fs=.8), dict(fs=.7), dict(ws=-.45, ls=-.005, fs=.8)] if mode[s2] == "one" else
+                      [dict(ws=-.45, ls=-.005), dict(fs=.85), dict(ws=-.45, ls=-.005, fs=.85), dict(ws=-.6, ls=-.008, fs=.75), dict(ws=-.6, ls=-.008, fs=.6)]):
+                tune[s2] = dict(base); fit.clear(); fit.update(basef)
+                if c.get("ws"): tune[s2]["ws"] = c["ws"]
+                if c.get("ls"): tune[s2]["ls"] = c["ls"]
+                if c.get("fs"): fit[f"*{s2}"] = round(basef.get(f"*{s2}", 1) * c["fs"], 3)
+                pg2, sp2, _, _, _ = probe(rr, plan, tune, fit)
+                a, z = sp2[s2]; f2 = Ft.fill(pg2[z - 1])
+                if z - a + 1 < lf[s2][0] and f2 >= 0.3:
+                    print(f"  repacked {s2}: {lf[s2]} -> {(z - a + 1, round(f2, 3))} with {c}"); done = True; break
+            if not done: tune[s2] = base; fit.clear(); fit.update(basef)
         json.dump(dict(fit=fit, tune=tune), open(st, "w"), indent=1)
         pages, sp, fbe, mode, posts = probe(rr, plan, tune, fit)
         lf = Ft.last_fill(pages, sp)

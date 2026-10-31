@@ -3,7 +3,6 @@
 
   press/AIDAN-JUDE-COMPLETE-INTERIOR.pdf   Mixam Perfect (PUR) inside pages, 8.5x11 + 0.125 in bleed
   press/AIDAN-JUDE-COMPLETE-COVER.pdf      the cover spread: back | spine | front, with bleed
-  press/AIDAN-JUDE-COMPLETE-FEDEX.pdf      US Letter, no bleed: front cover, inside pages, back cover
 
 Pagination: title page, contents spread, then the four parts. Each part divider is a left-hand page
 facing its first essay. Where a divider would fall on a right-hand page, and to bring the inside
@@ -81,32 +80,28 @@ section{{position:relative;width:{PW}pt;height:{PH}pt;break-after:page;overflow:
 .rh{{position:absolute;font:8.2pt/1 SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.16em;color:{Bd.MUTE};white-space:nowrap}}
 </style></head><body>{"".join(secs)}</body></html>"""
 
+NUMWORD = {51: "Fifty-one"}
+
 def cover_front(press, n_pieces, ox):
-    """The tool's default cover (substack-magazine/public/app.js '--- covers'): solid ground,
-    masthead centred near the top, 'Selected writing · span' beneath, the name and the piece
-    count at the foot; baselines as app.js places them. Set in the magazine's display face.
-    ox = where the trim's left edge sits inside the panel."""
-    from fontTools.ttLib import TTFont
-    f = TTFont(f"{Bd.R}/fonts/SSDisp-Regular.ttf"); cm, hm, upm = f.getBestCmap(), f["hmtx"], f["head"].unitsPerEm
-    wid = sum(hm[cm[ord(c)]][0] for c in "Aidan Jude") / upm
-    mz = min(110, (W - 96) / wid)
-    b = BL if press else 0
-    asc = 0.72                                    # cap height share of a 1.0 line box (line-height 1)
-    y1 = 64 + mz * 0.92; y2 = y1 + mz * 0.3 + 20
-    top = lambda base, size: b + base - size * asc
-    pos = f"left:{ox}pt;width:{W}pt"
-    return (f'<div class="mast" style="{pos};top:{top(y1, mz):.2f}pt;font-size:{mz:.2f}pt">Aidan Jude</div>'
-            f'<div class="sub" style="{pos};top:{top(y2, 11):.2f}pt">Selected writing&nbsp;&nbsp;·&nbsp;&nbsp;2023–2026</div>'
-            f'<div class="by" style="{pos};top:{top(H - 74, 13):.2f}pt">Aidan Jude</div>'
-            f'<div class="cnt" style="{pos};top:{top(H - 56, 9.5):.2f}pt">{n_pieces} pieces</div>')
+    """Cover A, "Night", approved by Aidan 2026-10-30 (artifact 90b2e31e, periodicals-covers.html),
+    ported verbatim: the prototype sizes in cqw (1% of the trim width). Mono line + rule at the top
+    in vermilion, the name stacked large at the foot, the count alone beneath it (Credo's foot).
+    Type and colour only, no image. ox = where the trim's left edge sits inside the panel."""
+    b = BL if press else 0; q = W / 100
+    L = ox + 7 * q; R = W - 14 * q
+    cnt = f"{NUMWORD.get(n_pieces, n_pieces)} pieces"
+    return (f'<div class="top" style="left:{L:.2f}pt;width:{R:.2f}pt;top:{b + 6 * q:.2f}pt;font-size:{2.6 * q:.2f}pt;'
+            f'border-bottom:{.25 * q:.2f}pt solid {Bd.ACCD};padding-bottom:{2.4 * q:.2f}pt">Periodicals · 2023–2026</div>'
+            f'<div class="name" style="left:{ox + 6.4 * q:.2f}pt;bottom:{b + 14 * q:.2f}pt;font-size:{21 * q:.2f}pt">Aidan<br>Jude</div>'
+            f'<div class="ft" style="left:{L:.2f}pt;bottom:{b + 6 * q:.2f}pt;font-size:{2.4 * q:.2f}pt">{cnt}</div>')
 
 COVER_CSS = """
-.cv{{position:absolute;top:0;height:{PH}pt;background:{G};color:{PA};overflow:hidden}}
-.cv>div{{position:absolute;text-align:center}}
-.mast{{font-family:SSDisp-Regular;line-height:1;letter-spacing:-.012em}}
-.sub{{font:11pt/1 SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.24em;color:{AC}}}
-.by{{font:13pt/1 SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.2em}}
-.cnt{{font:9.5pt/1 SSText-Italic;letter-spacing:.02em;color:#c9cdd5}}
+.cv{{position:absolute;top:0;height:{PH}pt;background:{G};color:#f3efe6;overflow:hidden}}
+.cv>div{{position:absolute;margin:0}}
+.top,.ft{{font-family:SCP-Regular;letter-spacing:.16em;text-transform:uppercase;line-height:1.2;white-space:nowrap}}
+.top{{color:{AC}}}
+.ft{{color:#9aa3b5}}
+.name{{font-family:SSDisp-Light;line-height:.86;letter-spacing:-.02em}}
 .cv .st{{position:absolute;left:50%;top:50%;white-space:nowrap;transform:translate(-50%,-50%) rotate(90deg);
   font:{SZ}pt/1 SSText-Regular;font-variant-caps:all-small-caps;letter-spacing:.2em;color:{PA}}}
 .cv .st em{{font-style:normal;color:{AC};margin-left:.9em}}
@@ -114,7 +109,7 @@ COVER_CSS = """
 
 def cover_doc(press, n_pieces, spine_pt=None, single=None):
     b = BL if press else 0; PH = H + 2 * b
-    ff = "".join(f"@font-face{{font-family:{n};src:url({Bd.F}/{n}.ttf)}}" for n in ("SSDisp-Regular", "SSText-Regular", "SSText-Italic"))
+    ff = "".join(f"@font-face{{font-family:{n};src:url({Bd.F}/{n}.ttf)}}" for n in ("SSDisp-Light", "SCP-Regular", "SSText-Regular", "SSText-Italic"))
     sz = min(10, (spine_pt or 0) * 0.42)
     css = COVER_CSS.format(PH=PH, G=Bd.GROUND, PA=Bd.PAPER, AC=Bd.ACCD, SZ=f"{sz:.1f}")
     if single:      # one page (FedEx): front or plain back
@@ -153,15 +148,16 @@ def main():
     j = json.load(open(f"{B}/fit.json")); fit, tune = j["fit"], j["tune"]
     # page counts measured in the book itself (markers are DOM-identical in every render)
     def measure(rr, tune, fit, lengths):
-        for it in range(4):
+        for it in range(8):
             plan, toc, total = paginate(lengths)
             htm, _, _ = Bd.document(True, plan, toc, tune, fit, marks=True)
             pdf = f"{B}/book-probe.pdf"; rr.pdf(htm, pdf, "book-probe")
             pages = Ft.read(pdf); sp = Ft.spans(pages)
             new = {s: z - a + 1 for s, (a, z) in sp.items()}
             if new == lengths: return lengths, pages, sp
+            print("  measure:", {k: (lengths[k], new[k]) for k in new if new[k] != lengths.get(k)})
             lengths = new
-        return lengths, pages, sp
+        raise SystemExit("page counts did not settle")
     with Bd.Renderer() as rr:
         lengths, pages, sp = measure(rr, tune, fit, {s: 1 for s in C.SLUGS})
         # pad pages are the last resort: first take pages out of the pieces whose last page is
@@ -216,19 +212,29 @@ def main():
     sp_in = spine_in(total); sp_pt = sp_in * 72
     out = {}
     with Bd.Renderer() as rr:
-        for press in (True, False):
+        for press in (True,):          # Mixam only (Aidan, 2026-10-30: "i only order thru mixam")
             tag = "INTERIOR" if press else "FEDEX"
-            htm, _, figs = Bd.document(press, plan, toc, tune, fit, marks=False)
+            # render WITH the probe markers, made transparent: the markers are what the page counts were
+            # measured with, and leaving them out shifted one column balance by a page (10/30)
+            htm, _, figs = Bd.document(press, plan, toc, tune, fit, marks=True)
+            k = ".mk{position:absolute;font-size:5pt;line-height:0;color:#fff"; assert k in htm
+            htm = htm.replace(k, k[:-4] + "transparent")
             raw = f"{B}/{tag.lower()}-raw.pdf"; rr.pdf(htm, raw, tag.lower())
             n = len(PdfReader(raw).pages)
+            if n == total + 1:      # the last line page's flex box spills a page that holds only its marker
+                last = PdfReader(raw).pages[-1]
+                if not re.sub(r"@[a-z]:[^@]+@|\s", "", last.extract_text() or "") and not last.images:
+                    w = PdfWriter(); [w.add_page(x) for x in PdfReader(raw).pages[:-1]]
+                    with open(raw, "wb") as fh: w.write(fh)
+                    n = total; print("  dropped the empty trailing page")
             assert n == total, f"{tag}: rendered {n} pages, plan says {total}"
             ov = f"{B}/{tag.lower()}-overlay.pdf"; rr.pdf(overlay_html(ks, press), ov, tag.lower() + "-overlay")
             body = f"{B}/{tag.lower()}-merged.pdf"; merge(raw, ov, body)
             if press:
                 dst = f"{P}/AIDAN-JUDE-COMPLETE-INTERIOR.pdf"; os.replace(body, dst)
-                boxes(dst, True, "Aidan Jude · Selected writing · 2023–2026 (inside pages)")
+                boxes(dst, True, "Aidan Jude · Periodicals · 2023–2026 (inside pages)")
                 cv = f"{P}/AIDAN-JUDE-COMPLETE-COVER.pdf"; rr.pdf(cover_doc(True, len(C.SLUGS), sp_pt), cv, "cover")
-                boxes(cv, True, "Aidan Jude · Selected writing · 2023–2026 (cover)")
+                boxes(cv, True, "Aidan Jude · Periodicals · 2023–2026 (cover)")
                 out["interior"], out["cover"] = dst, cv
             else:
                 fr, bk = f"{B}/fx-front.pdf", f"{B}/fx-back.pdf"
@@ -239,7 +245,7 @@ def main():
                     for pg in PdfReader(f).pages: w.add_page(pg)
                 dst = f"{P}/AIDAN-JUDE-COMPLETE-FEDEX.pdf"
                 with open(dst, "wb") as fh: w.write(fh)
-                boxes(dst, False, "Aidan Jude · Selected writing · 2023–2026")
+                boxes(dst, False, "Aidan Jude · Periodicals · 2023–2026")
                 out["fedex"] = dst
     json.dump(dict(plan=plan, toc=toc, total=total, spine_in=sp_in, out=out, kinds=ks), open(f"{B}/press.json", "w"), indent=1)
     print(f"spine {sp_in:.2f} in ({sp_pt:.1f} pt) ->", out)

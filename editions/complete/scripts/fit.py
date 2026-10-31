@@ -27,13 +27,15 @@ def read(pdf):
     with pdfplumber.open(pdf) as d:
         for i, pg in enumerate(d.pages):
             ch = pg.chars
-            mk = "".join(c["text"] for c in ch if c["size"] < 1.5)
+            # probe markers are the only white text in the book (5 pt, zero line height)
+            white = lambda c: (lambda k: k is not None and len(k) >= 1 and all(abs(v - 1) < .02 for v in k))(c.get("non_stroking_color"))
+            mk = "".join(c["text"] for c in ch if white(c))
             marks = re.findall(r"@([a-z]):([^@]+)@", mk)
-            tiny = [w for w in pg.extract_words(extra_attrs=["size"]) if w["size"] < 1.5]
+            tiny = [w for w in pg.extract_words(extra_attrs=["non_stroking_color"]) if white(w)]
             btop = next((w["top"] for w in tiny if w["text"].startswith("@b:")), None)
-            real = [c for c in ch if c["size"] >= 1.5]
-            words = pg.extract_words(extra_attrs=["size", "fontname"]) if real else []
-            words = [w for w in words if w["size"] >= 1.5]
+            real = [c for c in ch if not white(c)]
+            words = pg.extract_words(extra_attrs=["size", "fontname", "non_stroking_color"]) if real else []
+            words = [w for w in words if not white(w)]
             ims = sorted(({"x0": m["x0"], "x1": m["x1"], "top": m["top"], "bottom": m["bottom"], "src": m["srcsize"]} for m in pg.images),
                          key=lambda m: (m["top"], m["x0"]))
             # left page: content starts at OUTER; right page: INNER (page 1 is a right page)
@@ -45,10 +47,12 @@ def read(pdf):
 def spans(pages):
     """essay slug -> (first page, last page). An essay ends on the page before the next section
     starts (every section opens a page); the last section ends on the last page."""
+    import content as C
+    slug = {re.sub(r"[^a-z0-9]", "", x): x for x in C.SLUGS}   # a 1 px hyphen can drop out of the PDF text
     starts = []
     for pg in pages:
         for k, v in pg["marks"]:
-            if k in "edltc": starts.append((pg["n"], k, v))
+            if k in "edltc": starts.append((pg["n"], k, slug.get(re.sub(r"[^a-z0-9]", "", v), v)))
     starts.sort()
     out = {}
     for i, (n, k, v) in enumerate(starts):

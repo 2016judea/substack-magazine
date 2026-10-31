@@ -54,6 +54,8 @@ CREDIT = {
 SKIP_IMG = {("dec-25", 5)}
 
 URL = re.compile(r"(https?://\S+)")
+# Substack keeps some emoji as shortcodes in body_html; the characters he typed, not the codes
+EMOJI = {":eyes:": "👀", ":flame:": "🔥", ":rocket:": "🚀"}
 # his recurring departments (2023, January '24): the h2s that group pieces rather than title one
 DEPTS = {"The News", "Ideas", "Creative Riff", "Preface", "Journal"}
 def esc(s): return html.escape(s, quote=False)
@@ -62,7 +64,9 @@ def inline(node):
     out = []
     for c in node.children:
         if isinstance(c, NavigableString):
-            t = esc(str(c)); parts = URL.split(t)
+            t = str(c)
+            for k, v in EMOJI.items(): t = t.replace(k, v)
+            t = esc(t); parts = URL.split(t)
             out.append("".join(f'<span class="url">{x}</span>' if URL.fullmatch(x) else re.sub(r"(?<=\w)/(?=\w)", "/<wbr>", x) for x in parts))
         elif c.name == "label": continue
         elif c.name in ("em", "i"): out.append(f"<em>{inline(c)}</em>")
