@@ -5,7 +5,7 @@
 
 Text and pictures come from editions/complete/scripts/content.py (read, never written): the same parse
 the print book uses, so web and print hold the same words, the same pictures and the same credits. The
-reader is Credo's (web/reader.html, copied verbatim from ~/Desktop/credo/scripts/reader.html at cc67f79);
+reader is Credo's (web/reader.html, copied verbatim from ~/Desktop/workspace/credo/scripts/reader.html at cc67f79);
 every change to it is a checked string replacement below, so the port stays auditable.
 
 Identity from editions/complete/scripts/build.py: Source Serif 4 for display and text, Source Code Pro

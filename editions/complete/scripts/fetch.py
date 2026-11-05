@@ -15,8 +15,8 @@ from bs4 import BeautifulSoup
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); S = f"{R}/src"
 for d in ("posts", "img", "orig"): os.makedirs(f"{S}/{d}", exist_ok=True)
 HOST = "https://aidanjude.substack.com"
-CACHE = os.path.expanduser("~/Desktop/writing-topology/data/personal_corpus/cache/substack_html")
-CORPUS = os.path.expanduser("~/Desktop/writing-topology/data/personal_corpus/substack_all.json")
+CACHE = os.path.expanduser("~/Desktop/workspace/writing-topology/data/personal_corpus/cache/substack_html")
+CORPUS = os.path.expanduser("~/Desktop/workspace/writing-topology/data/personal_corpus/substack_all.json")
 
 def get(u, tries=6):
     code = "?"

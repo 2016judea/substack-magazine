@@ -108,7 +108,7 @@ print(f"contents (inner front): {len(order) - len(wrong)}/{len(order)} titles wi
 print(f"posts: {len(order)} in the book, {len(set(order))} distinct, chronological {dates == sorted(dates)}, openers found {len(order) - len(miss)}/{len(order)}")
 
 # nothing from randomaidan or visionboards
-cor = json.load(open(os.path.expanduser("~/Desktop/writing-topology/data/personal_corpus/substack_all.json")))
+cor = json.load(open(os.path.expanduser("~/Desktop/workspace/writing-topology/data/personal_corpus/substack_all.json")))
 ALLOWED = {"short-stories", "collected-poems", "love-letters-to-some-girl-i-havent",   # Aidan, 2026-10-30
            "dream-comet", "dream-oratory", "dream-a-higher-power"}                       # and 2026-10-31
 foreign = [c for c in cor if "aidanjude.substack.com" not in c["url"] and c["url"].rstrip("/").rsplit("/", 1)[1] not in ALLOWED]
